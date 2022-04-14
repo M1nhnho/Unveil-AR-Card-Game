@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QCARConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="qcar_config.xsd">
+  <Tracking>
+    <ImageTarget name="01D" size="10.000000 14.742857" />
+    <ImageTarget name="01C" size="10.000000 14.742857" />
+    <ImageTarget name="01H" size="10.000000 14.742857" />
+    <ImageTarget name="01S" size="10.000000 14.742857" />
+    <ImageTarget name="02C" size="10.000000 14.742857" />
+    <ImageTarget name="02D" size="10.000000 14.742857" />
+    <ImageTarget name="02H" size="10.000000 14.742857" />
+    <ImageTarget name="02S" size="10.000000 14.742857" />
+    <ImageTarget name="03C" size="10.000000 14.742857" />
+    <ImageTarget name="03D" size="10.000000 14.742857" />
+    <ImageTarget name="03H" size="10.000000 14.742857" />
+    <ImageTarget name="03S" size="10.000000 14.742857" />
+    <ImageTarget name="04C" size="10.000000 14.742857" />
+    <ImageTarget name="04D" size="10.000000 14.742857" />
+    <ImageTarget name="04H" size="10.000000 14.742857" />
+    <ImageTarget name="04S" size="10.000000 14.742857" />
+    <ImageTarget name="05C" size="10.000000 14.742857" />
+    <ImageTarget name="05D" size="10.000000 14.742857" />
+    <ImageTarget name="05H" size="10.000000 14.742857" />
+    <ImageTarget name="05S" size="10.000000 14.742857" />
+    <ImageTarget name="06C" size="10.000000 14.742857" />
+    <ImageTarget name="06D" size="10.000000 14.742857" />
+    <ImageTarget name="06H" size="10.000000 14.742857" />
+    <ImageTarget name="06S" size="10.000000 14.742857" />
+    <ImageTarget name="07C" size="10.000000 14.742857" />
+    <ImageTarget name="07D" size="10.000000 14.742857" />
+    <ImageTarget name="07H" size="10.000000 14.742857" />
+    <ImageTarget name="07S" size="10.000000 14.742857" />
+    <ImageTarget name="08C" size="10.000000 14.742857" />
+    <ImageTarget name="08D" size="10.000000 14.742857" />
+    <ImageTarget name="08H" size="10.000000 14.742857" />
+    <ImageTarget name="08S" size="10.000000 14.742857" />
+    <ImageTarget name="09C" size="10.000000 14.742857" />
+    <ImageTarget name="09D" size="10.000000 14.742857" />
+    <ImageTarget name="09H" size="10.000000 14.742857" />
+    <ImageTarget name="09S" size="10.000000 14.742857" />
+    <ImageTarget name="10C" size="10.000000 14.742857" />
+    <ImageTarget name="10D" size="10.000000 14.742857" />
+    <ImageTarget name="10H" size="10.000000 14.742857" />
+    <ImageTarget name="10S" size="10.000000 14.742857" />
+    <ImageTarget name="11C" size="10.000000 14.742857" />
+    <ImageTarget name="11D" size="10.000000 14.742857" />
+    <ImageTarget name="11H" size="10.000000 14.742857" />
+    <ImageTarget name="11S" size="10.000000 14.742857" />
+    <ImageTarget name="12C" size="10.000000 14.742857" />
+    <ImageTarget name="12D" size="10.000000 14.742857" />
+    <ImageTarget name="12H" size="10.000000 14.742857" />
+    <ImageTarget name="12S" size="10.000000 14.742857" />
+    <ImageTarget name="13C" size="10.000000 14.742857" />
+    <ImageTarget name="13D" size="10.000000 14.742857" />
+    <ImageTarget name="13H" size="10.000000 14.742857" />
+    <ImageTarget name="13S" size="10.000000 14.742857" />
+  </Tracking>
+</QCARConfig>
