@@ -7,7 +7,9 @@ public class Card : MonoBehaviour
 {
     public CardGame cardGame;
     string cardName, number, suit;
+    string reveal = "?";
     TextMesh trueValueText;
+    bool scanned = false;
 
     // Start is called before the first frame update
     void Start()
@@ -31,26 +33,78 @@ public class Card : MonoBehaviour
 
     public void ScanFound()
     {
-        cardGame.currentCardsScannedText.text = ++cardGame.currentCardsScanned + "/5 Cards";
-        if ((int)cardGame.phase == 0) // Draw Phase
+        switch (cardGame.phase)
         {
-            int trueValue = Array.IndexOf(cardGame.numberTVs, number) + Array.IndexOf(cardGame.suitTVs, suit) + 2;
-            trueValueText.text = trueValue.ToString();
-            if (cardGame.turn < 0) // If Red's turn, assign owner to Red, reveal to opponent Blue
-            {
-                cardGame.cardsDict[cardName] = "RB";
-                trueValueText.color = Color.red;
-            }
-            else // If Blue's turn, assign owner to Blue, reveal to opponent Red
-            {
-                cardGame.cardsDict[cardName] = "BR";
-                trueValueText.color = Color.blue;
-            }
+            case Phases.DRAW:
+                if (reveal == "?") // If card hasn't been scanned already
+                {
+                    if (cardGame.turn < 0 && cardGame.redHand.Count < 5) // If Red's turn, reveal to opponent Blue; provided Red has < 5 cards
+                        AddCardToHand(true);
+                    else if (cardGame.turn >= 0 && cardGame.blueHand.Count < 5) // If Blue's turn, reveal to opponent Red; provided Blue has < 5 cards
+                        AddCardToHand(false);
+                }
+                else
+                {
+                    trueValueText.text = "X";
+                }
+                break;
+
+
+            case Phases.TRADE:
+                bool colour;
+                if (cardGame.turn < 0)
+                    colour = cardGame.attackerColour;
+                else
+                    colour = cardGame.defenderColour;
+
+                if ((colour && cardGame.blueHand.Contains(cardName)) || (!colour && cardGame.redHand.Contains(cardName)))
+                {
+                    int trueValue = Array.IndexOf(cardGame.numberTrueValues, number) + Array.IndexOf(cardGame.suitTrueValues, suit) + 2; // +2 due to both arrays starting at 0
+                    trueValueText.text = trueValue.ToString();
+                }
+                else
+                {
+                    trueValueText.text = "?";
+                }
+                break;
+
         }
+    }
+
+    void AddCardToHand(bool colour)
+    {
+        if (colour)
+        {
+            reveal = "B";
+            cardGame.redHand.Add(cardName);
+            trueValueText.color = Color.red;
+        }
+        else
+        {
+            reveal = "R";
+            cardGame.blueHand.Add(cardName);
+            trueValueText.color = Color.blue;
+        }
+
+        scanned = true;
+        cardGame.currentCardsScannedText.text = ++cardGame.currentCardsScanned + "/5 Cards";
     }
 
     public void ScanLost()
     {
-        cardGame.currentCardsScannedText.text = --cardGame.currentCardsScanned + "/5 Cards";
+        if (scanned) // By default the scan is already lost so this makes it so it only decrements if the card was scanned first
+        {
+            cardGame.currentCardsScannedText.text = --cardGame.currentCardsScanned + "/5 Cards";
+            scanned = false;
+            if (cardGame.phase == Phases.DRAW && (cardGame.turn == -1 || cardGame.turn == 1))
+            {
+                reveal = "?";
+                trueValueText.color = Color.white;
+                if (cardGame.turn < 0)
+                    cardGame.redHand.Remove(cardName);
+                else
+                    cardGame.blueHand.Remove(cardName);
+            }
+        }
     }
 }
