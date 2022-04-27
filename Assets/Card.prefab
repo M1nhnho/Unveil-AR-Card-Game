@@ -200,6 +200,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cardGame: {fileID: 0}
+  tradeSelectButton: {fileID: 0}
 --- !u!1 &6065412006831685174
 GameObject:
   m_ObjectHideFlags: 0

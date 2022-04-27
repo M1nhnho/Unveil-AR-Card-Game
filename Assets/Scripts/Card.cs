@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System;
+using UnityEngine;
+using Vuforia;
 
 public class Card : MonoBehaviour
 {
@@ -11,6 +12,10 @@ public class Card : MonoBehaviour
     TextMesh trueValueText;
     bool scanned = false;
 
+    //public VirtualButtonBehaviour tradeSelectButton;
+    SpriteRenderer selectGlow;
+    bool selected = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -18,6 +23,9 @@ public class Card : MonoBehaviour
         number = cardName.Substring(0, 2);
         suit = cardName.Substring(2, 1);
         trueValueText = gameObject.transform.GetChild(0).GetComponent<TextMesh>();
+
+        //tradeSelectButton.RegisterOnButtonPressed(TradeSelect);
+        selectGlow = gameObject.GetComponentInChildren<SpriteRenderer>();
     }
 
     // Update is called once per frame
@@ -107,4 +115,13 @@ public class Card : MonoBehaviour
             }
         }
     }
+
+    /*
+    public void TradeSelect(VirtualButtonBehaviour button)
+    {
+        trueValueText.text = "YES";
+        selected = !selected;
+        selectGlow.gameObject.SetActive(selected);
+    }
+    */
 }
