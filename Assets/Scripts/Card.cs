@@ -2,9 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Vuforia;
 
-public class Card : MonoBehaviour
+public class Card : MonoBehaviour, IPointerDownHandler
 {
     public CardGame cardGame;
     string cardName, number, suit;
@@ -26,15 +27,16 @@ public class Card : MonoBehaviour
 
         //tradeSelectButton.RegisterOnButtonPressed(TradeSelect);
         selectGlow = gameObject.GetComponentInChildren<SpriteRenderer>();
+        selectGlow.gameObject.SetActive(false);
     }
 
     // Update is called once per frame
     void Update()
     {
-        // Number always faces camera
+        // True Value always faces camera
         Vector3 cardPos = transform.position;
         Vector3 camPos = Camera.main.transform.position;
-        cardPos.y = 0; // y rotation locked so number stays vertical
+        cardPos.y = 0; // y rotation locked so True Value stays vertical
         camPos.y = 0;
         trueValueText.transform.rotation = Quaternion.LookRotation(cardPos - camPos);
     }
@@ -46,36 +48,30 @@ public class Card : MonoBehaviour
             case Phases.DRAW:
                 if (reveal == "?") // If card hasn't been scanned already
                 {
-                    if (cardGame.turn < 0 && cardGame.redHand.Count < 5) // If Red's turn, reveal to opponent Blue; provided Red has < 5 cards
-                        AddCardToHand(true);
-                    else if (cardGame.turn >= 0 && cardGame.blueHand.Count < 5) // If Blue's turn, reveal to opponent Red; provided Blue has < 5 cards
-                        AddCardToHand(false);
-                }
-                else
-                {
-                    trueValueText.text = "X";
+                    if (cardGame.nextTurn == Turns.SECONDREADY && cardGame.redHand.Count < 5)
+                        AddCardToHand(true); // Add to Red Hand
+                    else if (cardGame.nextTurn == Turns.FIRSTREADY && cardGame.blueHand.Count < 5 && !cardGame.redHand.Contains(cardName))
+                        AddCardToHand(false); // Add to Blue Hand
                 }
                 break;
 
 
             case Phases.TRADE:
-                bool colour;
-                if (cardGame.turn < 0)
-                    colour = cardGame.attackerColour;
-                else
-                    colour = cardGame.defenderColour;
-
-                if ((colour && cardGame.blueHand.Contains(cardName)) || (!colour && cardGame.redHand.Contains(cardName)))
+                // Only enables cards currently in play to be selected
+                if (cardGame.redHand.Contains(cardName) || cardGame.blueHand.Contains(cardName))
                 {
-                    int trueValue = Array.IndexOf(cardGame.numberTrueValues, number) + Array.IndexOf(cardGame.suitTrueValues, suit) + 2; // +2 due to both arrays starting at 0
-                    trueValueText.text = trueValue.ToString();
-                }
-                else
-                {
+                    selectGlow.gameObject.SetActive(true);
                     trueValueText.text = "?";
                 }
+
+                RevealTrueValues();
                 break;
 
+
+            case Phases.FIGHTORFLEE:
+                selectGlow.gameObject.SetActive(false);
+                RevealTrueValues();
+                break;
         }
     }
 
@@ -84,44 +80,88 @@ public class Card : MonoBehaviour
         if (colour)
         {
             reveal = "B";
-            cardGame.redHand.Add(cardName);
             trueValueText.color = Color.red;
+            cardGame.redHand.Add(cardName);
         }
         else
         {
             reveal = "R";
-            cardGame.blueHand.Add(cardName);
             trueValueText.color = Color.blue;
+            cardGame.blueHand.Add(cardName);
         }
 
         scanned = true;
         cardGame.currentCardsScannedText.text = ++cardGame.currentCardsScanned + "/5 Cards";
     }
 
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        // Attacker can only select cards currently in play
+        if (selectGlow.gameObject.activeInHierarchy && cardGame.nextTurn == Turns.SECONDREADY)
+        {
+            selected = !selected;
+            if (selected)
+            {
+                if (cardGame.redHand.Contains(cardName))
+                {
+                    selectGlow.color = Color.red;
+                }
+                else if (cardGame.blueHand.Contains(cardName))
+                {
+                    selectGlow.color = Color.blue;
+                }
+            }
+            else
+            {
+                selectGlow.color = Color.black;
+            }
+        }
+    }
+
+    void RevealTrueValues()
+    {
+        // Gets which colour the current turn is
+        bool colour;
+        if (cardGame.nextTurn == Turns.SECONDREADY)
+            colour = cardGame.attackerColour;
+        else
+            colour = cardGame.defenderColour;
+
+        // Checks current colour and reveals opponent's True Values
+        if ((colour && reveal == "R") || (!colour && reveal == "B"))
+        {
+            int trueValue = Array.IndexOf(cardGame.numberTrueValues, number) + Array.IndexOf(cardGame.suitTrueValues, suit) + 2; // +2 due to both arrays starting at 0
+            trueValueText.text = trueValue.ToString();
+        }
+        else if (reveal == "R" || reveal == "B") // Otherwise, hide True Value (this only changes the currect cards in play)
+        {
+            trueValueText.text = "?";
+        }
+    }
+
     public void ScanLost()
     {
         if (scanned) // By default the scan is already lost so this makes it so it only decrements if the card was scanned first
         {
-            cardGame.currentCardsScannedText.text = --cardGame.currentCardsScanned + "/5 Cards";
             scanned = false;
-            if (cardGame.phase == Phases.DRAW && (cardGame.turn == -1 || cardGame.turn == 1))
+            cardGame.currentCardsScannedText.text = --cardGame.currentCardsScanned + "/5 Cards";
+            
+            // Reset card if scan lost during turn
+            if (cardGame.phase == Phases.DRAW && (cardGame.nextTurn == Turns.FIRSTREADY || cardGame.nextTurn == Turns.SECONDREADY))
             {
                 reveal = "?";
                 trueValueText.color = Color.white;
-                if (cardGame.turn < 0)
+                if (cardGame.nextTurn == Turns.SECONDREADY)
                     cardGame.redHand.Remove(cardName);
                 else
                     cardGame.blueHand.Remove(cardName);
             }
         }
-    }
 
-    /*
-    public void TradeSelect(VirtualButtonBehaviour button)
-    {
-        trueValueText.text = "YES";
-        selected = !selected;
-        selectGlow.gameObject.SetActive(selected);
+        if (cardGame.phase == Phases.RESULTS && cardGame.nextTurn == Turns.FIRSTREADY)
+        {
+            reveal = "X";
+            trueValueText.text = "X";
+        }
     }
-    */
 }

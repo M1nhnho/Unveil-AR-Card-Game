@@ -6,30 +6,29 @@ using TMPro;
 using System;
 using System.Linq;
 
-public enum Phases { DRAW, TRADE, UPDATE, FIGHTORFLEE, RESULTS }
+public enum Phases { DRAW, TRADE, FIGHTORFLEE, RESULTS }
+public enum Turns { FIRSTREADY, FIRSTTURN, SECONDREADY, SECONDTURN }
 
 public class CardGame : MonoBehaviour
 {
     public RawImage background;
     public TextMeshProUGUI turnText;
     public TextMeshProUGUI instructionsText;
-    public Transform phaseButton;
+    public Transform progressButton;
 
     public Transform roundDisplay;
     public Transform phaseDisplay;
     public Transform roleDisplay;
 
     // Hides in inspector and stops it from staying as the original value
-    // So allows me to actually change the value in the script here
-    [System.NonSerialized] public Phases phase = Phases.DRAW;
+    // So allows me to actually change the value in the script here instead of needing to change in the inspector
+    [System.NonSerialized] public Phases phase = Phases.DRAW; // The current phase
+    [System.NonSerialized] public Turns nextTurn = Turns.FIRSTTURN; // As the progress button changes the current turn to the next turn
     [System.NonSerialized] public int round = 1;
-    [System.NonSerialized] public int turn = -2; // Negative is the first turn (Red/Attacker) in each round, positive second turn (Blue/Defender)
-                                                 // -2 and 0 is to ready the turn
-                                                 // -1 and 1 is the actual turn
 
     // bool for colour: true = Red, false = Blue
-    [System.NonSerialized] public bool attackerColour = true; // Red is attacker first
-    [System.NonSerialized] public bool defenderColour = false; // Blue is defender first
+    [System.NonSerialized] public bool attackerColour = true; // Red is Attacker first
+    [System.NonSerialized] public bool defenderColour = false; // Blue is Defender first
     [System.NonSerialized] public List<string> redHand = new List<string>();
     [System.NonSerialized] public List<string> blueHand = new List<string>();
 
@@ -57,92 +56,135 @@ public class CardGame : MonoBehaviour
         switch (phase)
         {
             case Phases.DRAW:
-                turn++;
-                if (turn == -1 || turn == 1)
+                if (nextTurn == Turns.FIRSTREADY)
                 {
+                    if (blueHand.Count == 5) // Separate if statement as the first specifically checks which phase
+                    {
+                        // Set up for next phase (Trade)
+                        phase = Phases.TRADE;
+                        nextTurn = Turns.FIRSTTURN;
+                        ReadyTurn(attackerColour, "Attacker", "Decide which cards you wish to trade");
+                    }
+                }
+
+                else if (nextTurn == Turns.SECONDREADY)
+                {
+                    if (redHand.Count == 5)
+                    {
+                        nextTurn = Turns.SECONDTURN;
+                        ReadyTurn(false, "Blue", "Draw your 5 cards and scan them");
+                    }
+                }
+
+                else
+                {
+                    if (nextTurn == Turns.FIRSTTURN)
+                        nextTurn = Turns.SECONDREADY;
+                    else
+                        nextTurn = Turns.FIRSTREADY;
+
                     gameObject.SetActive(true);
                     background.gameObject.SetActive(false);
                     currentCardsScannedText.gameObject.SetActive(true);
-                }
-
-                else if (turn == 0)
-                {
-                    ReadyTurn(false, "Blue", "Draw your 5 cards and scan them");
-                }
-
-                else if (turn == 2)
-                {
-                    // Set up for next phase (Trade)
-                    ReadyTurn(attackerColour, "Attacker", "Decide which cards you wish to trade");
-                    turn = -2;
-                    phase = Phases.TRADE;
                 }
                 break;
 
 
             case Phases.TRADE:
-                turn++;
-                if (turn == -1 || turn == 1)
+                if (nextTurn == Turns.FIRSTREADY)
                 {
-                    gameObject.SetActive(true);
-                    background.gameObject.SetActive(false);
+                    // Set up for next phase (Fight-Or-Flee)
+                    phase = Phases.FIGHTORFLEE;
+                    nextTurn = Turns.FIRSTTURN;
+                    ReadyTurn(attackerColour, "Attacker", "Decide to fight or to flee");
                 }
 
-                else if (turn == 0)
+                else if (nextTurn == Turns.SECONDREADY)
                 {
+                    nextTurn = Turns.SECONDTURN;
                     ReadyTurn(defenderColour, "Defender", "Do you accept or decline the trade?");
                 }
 
-                else if (turn == 2)
+                else
                 {
-                    // Set up for next phase (Trade)
-                    ReadyTurn(attackerColour, "Attacker", "Decide to fight or to flee");
-                    turn = -2;
-                    phase = Phases.FIGHTORFLEE;
-                }
-                break;
+                    if (nextTurn == Turns.FIRSTTURN)
+                        nextTurn = Turns.SECONDREADY;
+                    else
+                        nextTurn = Turns.FIRSTREADY;
 
-
-            case Phases.UPDATE: // MAY NOT BE NECESSARY -> If the cards have buttons, it can automatically update the ownership of cards
-                turn++;
-                if (turn == 2)
-                {
-                    turn = -2;
-                    phase = Phases.FIGHTORFLEE;
+                    gameObject.SetActive(true);
+                    background.gameObject.SetActive(false);
                 }
                 break;
 
 
             case Phases.FIGHTORFLEE:
-                round++;
-                attackerColour = !attackerColour;
-                defenderColour = !defenderColour;
-                redHand.Clear();
-                blueHand.Clear();
-
-                if (round == 4)
+                if (nextTurn == Turns.FIRSTREADY)
                 {
-                    gameObject.SetActive(false);
-                    background.color = Color.red;
-                    background.gameObject.SetActive(true);
-                    turnText.text = "Red Wins!";
-                    instructionsText.text = "Return to Main Menu on the bottom left";
                     phase = Phases.RESULTS;
+                    if (round == 3)
+                    {
+                        round++;
+                        int redSum = 0;
+                        int blueSum = 0;
+                        string number, suit;
+                        for (int i = 0; i < 5; i++)
+                        {
+                            number = redHand[i].Substring(0, 2);
+                            suit = redHand[i].Substring(2, 1);
+                            redSum += Array.IndexOf(numberTrueValues, number) + Array.IndexOf(suitTrueValues, suit) + 2;
+
+                            number = blueHand[i].Substring(0, 2);
+                            suit = blueHand[i].Substring(2, 1);
+                            blueSum += Array.IndexOf(numberTrueValues, number) + Array.IndexOf(suitTrueValues, suit) + 2;
+                        }
+
+                        if (redSum > blueSum)
+                            ReadyTurn(true, "Red Wins!", "Return to Main Menu on the bottom left");
+                        else if (blueSum > redSum)
+                            ReadyTurn(false, "Blue Wins!", "Return to Main Menu on the bottom left");
+                        else
+                            ReadyTurn(false, "Draw!", "Return to Main Menu on the bottom left");
+                    }
+                    else
+                    {
+                        round++;
+                        attackerColour = !attackerColour;
+                        defenderColour = !defenderColour;
+                        redHand.Clear();
+                        blueHand.Clear();
+
+                        roundDisplay.GetChild(0).GetComponent<TextMeshProUGUI>().text = round.ToString();
+                        ReadyTurn(defenderColour, "Someone Fled", "Move onto the next round");
+                    }
                 }
+
+                else if (nextTurn == Turns.SECONDREADY)
+                {
+                    nextTurn = Turns.SECONDTURN;
+                    ReadyTurn(defenderColour, "Defender", "Do you fight or flee in response?");
+                }
+
                 else
                 {
-                    roundDisplay.GetChild(0).GetComponent<TextMeshProUGUI>().text = round.ToString();
+                    if (nextTurn == Turns.FIRSTTURN)
+                        nextTurn = Turns.SECONDREADY;
+                    else
+                        nextTurn = Turns.FIRSTREADY;
 
-                    background.color = Color.red;
-                    background.gameObject.SetActive(true);
-                    turnText.text = "Red";
-                    instructionsText.text = "Draw your 5 cards and scan them";
-                    phase = Phases.DRAW;
+                    gameObject.SetActive(true);
+                    background.gameObject.SetActive(false);
                 }
                 break;
 
 
             case Phases.RESULTS:
+                if (round <= 3)
+                {
+                    phase = Phases.DRAW;
+                    nextTurn = Turns.FIRSTTURN;
+                    ReadyTurn(true, "Red", "Draw your 5 cards and scan them");
+                }
                 break;
         }
     }
@@ -150,7 +192,7 @@ public class CardGame : MonoBehaviour
     void ReadyTurn(bool colour, string turn, string instructions)
     {
         gameObject.SetActive(false);
-        currentCardsScannedText.gameObject.SetActive(true);
+        currentCardsScannedText.gameObject.SetActive(false);
 
         if (colour)
             background.color = Color.red;
