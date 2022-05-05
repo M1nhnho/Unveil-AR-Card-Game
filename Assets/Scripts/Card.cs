@@ -25,7 +25,6 @@ public class Card : MonoBehaviour, IPointerDownHandler
         suit = cardName.Substring(2, 1);
         trueValueText = gameObject.transform.GetChild(0).GetComponent<TextMesh>();
 
-        //tradeSelectButton.RegisterOnButtonPressed(TradeSelect);
         selectGlow = gameObject.GetComponentInChildren<SpriteRenderer>();
         selectGlow.gameObject.SetActive(false);
     }
@@ -34,11 +33,11 @@ public class Card : MonoBehaviour, IPointerDownHandler
     void Update()
     {
         // True Value always faces camera
-        Vector3 cardPos = transform.position;
-        Vector3 camPos = Camera.main.transform.position;
-        cardPos.y = 0; // y rotation locked so True Value stays vertical
-        camPos.y = 0;
-        trueValueText.transform.rotation = Quaternion.LookRotation(cardPos - camPos);
+        Vector3 trueValuePosition = trueValueText.transform.position;
+        Vector3 cameraPosition = Camera.main.transform.position;
+        trueValuePosition.y = 0; // Keeps True Value horizontal as this makes it not consider the difference in height
+        cameraPosition.y = 0;
+        trueValueText.transform.rotation = Quaternion.LookRotation(trueValuePosition - cameraPosition);
     }
 
     public void ScanFound()
@@ -58,11 +57,8 @@ public class Card : MonoBehaviour, IPointerDownHandler
 
             case Phases.TRADE:
                 // Only enables cards currently in play to be selected
-                if (cardGame.redHand.Contains(cardName) || cardGame.blueHand.Contains(cardName))
-                {
+                if (reveal == "R" || reveal == "B")
                     selectGlow.gameObject.SetActive(true);
-                    trueValueText.text = "?";
-                }
 
                 RevealTrueValues();
                 break;
@@ -91,7 +87,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
         }
 
         scanned = true;
-        cardGame.currentCardsScannedText.text = ++cardGame.currentCardsScanned + "/5 Cards";
+        cardGame.infoText.text = ++cardGame.currentCardsScanned + "/5 Cards";
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -141,10 +137,11 @@ public class Card : MonoBehaviour, IPointerDownHandler
 
     public void ScanLost()
     {
-        if (scanned) // By default the scan is already lost so this makes it so it only decrements if the card was scanned first
+        // By default the scan is already lost so this makes it so it only decrements if the card was scanned first
+        if (scanned)
         {
             scanned = false;
-            cardGame.currentCardsScannedText.text = --cardGame.currentCardsScanned + "/5 Cards";
+            cardGame.infoText.text = --cardGame.currentCardsScanned + "/5 Cards";
             
             // Reset card if scan lost during turn
             if (cardGame.phase == Phases.DRAW && (cardGame.nextTurn == Turns.FIRSTREADY || cardGame.nextTurn == Turns.SECONDREADY))
@@ -158,7 +155,8 @@ public class Card : MonoBehaviour, IPointerDownHandler
             }
         }
 
-        if (cardGame.phase == Phases.RESULTS && cardGame.nextTurn == Turns.FIRSTREADY)
+        // At the end of each round, the 10 cards currently in play are used up to prevent rescanning
+        if (cardGame.phase == Phases.RESULTS)
         {
             reveal = "X";
             trueValueText.text = "X";
