@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using TMPro;
 using Vuforia;
 
 public class Card : MonoBehaviour, IPointerDownHandler
@@ -10,7 +11,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
     public CardGame cardGame;
     string cardName, number, suit;
     string reveal = "?";
-    TextMesh trueValueText;
+    TextMeshPro trueValueText;
     bool scanned = false;
 
     //public VirtualButtonBehaviour tradeSelectButton;
@@ -23,7 +24,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
         cardName = gameObject.name;
         number = cardName.Substring(0, 2);
         suit = cardName.Substring(2, 1);
-        trueValueText = gameObject.transform.GetChild(0).GetComponent<TextMesh>();
+        trueValueText = gameObject.GetComponentInChildren<TextMeshPro>();
 
         selectGlow = gameObject.GetComponentInChildren<SpriteRenderer>();
         selectGlow.gameObject.SetActive(false);
@@ -35,8 +36,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
         // True Value always faces camera
         Vector3 trueValuePosition = trueValueText.transform.position;
         Vector3 cameraPosition = Camera.main.transform.position;
-        trueValuePosition.y = 0; // Keeps True Value horizontal as this makes it not consider the difference in height
-        cameraPosition.y = 0;
+        trueValuePosition.y = 0; cameraPosition.y = 0; // Keeps True Value horizontal as this makes it not consider the difference in height
         trueValueText.transform.rotation = Quaternion.LookRotation(trueValuePosition - cameraPosition);
     }
 
@@ -92,7 +92,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        // Attacker can only select cards currently in play
+        // Attacker can only select current cards in play
         if (selectGlow.gameObject.activeInHierarchy && cardGame.nextTurn == Turns.SECONDREADY)
         {
             selected = !selected;
@@ -155,7 +155,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
             }
         }
 
-        // At the end of each round, the 10 cards currently in play are used up to prevent rescanning
+        // At the end of each round, the current 10 cards in play are disabled to prevent rescanning
         if (cardGame.phase == Phases.RESULTS)
         {
             reveal = "X";

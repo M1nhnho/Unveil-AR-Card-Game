@@ -20,9 +20,11 @@ public class CardGame : MonoBehaviour
     public Transform secondaryButton;
     TextMeshProUGUI secondaryText;
 
-    public Transform roundDisplay;
-    public Transform phaseDisplay;
-    public Transform roleDisplay;
+    public TextMeshProUGUI roundDisplay;
+    public RawImage phaseDisplay;
+    public Texture[] phaseIcons = new Texture[4]; // Cards, Handshake, Lightning, Trophy
+    public RawImage roleDisplay;
+    public Texture[] roleIcons = new Texture[2]; // Sword, Shield
 
     // Hides in inspector and stops it from staying as the original value
     // So allows me to actually change the value in the script here instead of needing to change in the inspector
@@ -55,13 +57,14 @@ public class CardGame : MonoBehaviour
         suitTrueValues = suitTrueValues.OrderBy(x => random.Next()).ToArray();
 
         // Begin with Red's turn to scan cards
-        ReadyTurn(true, "Red", "Draw your 5 cards and scan them");
+        ReadyTurn(true, "Red", "Draw your 5 cards and scan them", "Ready");
     }
 
     public void ProgressPhase()
     {
         switch (phase)
         {
+            // ----- Draw Phase --------------------------------------------------
             case Phases.DRAW:
                 if (nextTurn == Turns.FIRSTREADY)
                 {
@@ -70,7 +73,7 @@ public class CardGame : MonoBehaviour
                         // Set up for next phase (Trade)
                         phase = Phases.TRADE;
                         nextTurn = Turns.FIRSTTURN;
-                        ReadyTurn(attackerColour, "Attacker", "Decide which cards you wish to trade");
+                        ReadyTurn(attackerColour, "Attacker", "Decide which cards you wish to trade", "Ready");
                     }
                 }
 
@@ -79,7 +82,7 @@ public class CardGame : MonoBehaviour
                     if (redHand.Count == 5)
                     {
                         nextTurn = Turns.SECONDTURN;
-                        ReadyTurn(false, "Blue", "Draw your 5 cards and scan them");
+                        ReadyTurn(false, "Blue", "Draw your 5 cards and scan them", "Ready");
                     }
                 }
 
@@ -93,26 +96,27 @@ public class CardGame : MonoBehaviour
                     gameObject.SetActive(true);
                     background.gameObject.SetActive(false);
                     infoText.gameObject.SetActive(true);
+                    SwapButtonLayout(false, "Reset", "Confirm");
                 }
                 break;
 
-
+            // ----- Trade Phase --------------------------------------------------
             case Phases.TRADE:
                 if (nextTurn == Turns.FIRSTREADY)
                 {
-                    // Set up for next phase (Fight-Or-Flee)
-                    phase = Phases.FIGHTORFLEE;
-                    nextTurn = Turns.FIRSTTURN;
-                    SwapButtonLayout(true, "-", "Ready");
-                    ReadyTurn(attackerColour, "Attacker", "Decide to fight or to flee");
                     attackerAccept = false;
                     defenderAccept = false;
+
+                    // Set up next phase (Fight-Or-Flee)
+                    phase = Phases.FIGHTORFLEE;
+                    nextTurn = Turns.FIRSTTURN;
+                    ReadyTurn(attackerColour, "Attacker", "Decide to fight or to flee", "Ready");
                 }
 
                 else if (nextTurn == Turns.SECONDREADY)
                 {
                     nextTurn = Turns.SECONDTURN;
-                    ReadyTurn(defenderColour, "Defender", "Do you accept or decline the trade?");
+                    ReadyTurn(defenderColour, "Defender", "Do you accept or decline the trade?", "Ready");
                 }
 
                 else
@@ -132,16 +136,19 @@ public class CardGame : MonoBehaviour
                 }
                 break;
 
-
+            // ----- Fight-Or-Flee Phase --------------------------------------------------
             case Phases.FIGHTORFLEE:
                 if (nextTurn == Turns.FIRSTREADY)
                 {
                     phase = Phases.RESULTS;
-                    if (attackerAccept && defenderAccept)
+
+                    if (attackerAccept && defenderAccept) // Both chose to Fight
                     {
+                        // Disable progress buttons as the match has ended
                         progressButton.gameObject.SetActive(false);
                         secondaryButton.gameObject.SetActive(false);
 
+                        // Calculate whose hand had the higher True Value sum
                         int redSum = 0;
                         int blueSum = 0;
                         string number, suit;
@@ -157,22 +164,23 @@ public class CardGame : MonoBehaviour
                         }
 
                         if (redSum > blueSum)
-                            ReadyTurn(true, "Red Wins!", "Return to the Main Menu");
+                            ReadyTurn(true, "Red Wins!", "Return to the Main Menu", "-");
                         else if (redSum < blueSum)
-                            ReadyTurn(false, "Blue Wins!", "Return to the Main Menu");
+                            ReadyTurn(false, "Blue Wins!", "Return to the Main Menu", "-");
                         else
-                            ReadyTurn(false, "Draw!", "Return to the Main Menu");
+                            ReadyTurn(false, "Draw!", "Return to the Main Menu", "-");
                     }
-                    else if (round == 3) // If it's the last round but someone still flees
+                    else if (round == 3) // If it's the last round but someone still Flees
                     {
                         progressButton.gameObject.SetActive(false);
                         secondaryButton.gameObject.SetActive(false);
-                        ReadyTurn(true, "No Contest!", "Return to the Main Menu");
+                        ReadyTurn(true, "No Contest!", "Return to the Main Menu", "-");
                     }
-                    else
+                    else // Otherwise, next round
                     {
+                        // Reset back to Draw phase
                         round++;
-                        roundDisplay.GetChild(0).GetComponent<TextMeshProUGUI>().text = round.ToString();
+                        roundDisplay.text = round.ToString();
                         infoText.text = "0/5 Cards";
                         infoText.gameObject.SetActive(false);
 
@@ -183,16 +191,14 @@ public class CardGame : MonoBehaviour
                         redHand.Clear();
                         blueHand.Clear();
 
-                        SwapButtonLayout(true, "-", "Next Round");
-                        ReadyTurn(defenderColour, "Someone Fled", "Move onto the next round");
+                        ReadyTurn(defenderColour, "Someone Fled", "Move onto the next round", "Next Round");
                     }
                 }
 
                 else if (nextTurn == Turns.SECONDREADY)
                 {
                     nextTurn = Turns.SECONDTURN;
-                    SwapButtonLayout(true, "-", "Ready");
-                    ReadyTurn(defenderColour, "Defender", "Do you fight or flee in response?");
+                    ReadyTurn(defenderColour, "Defender", "Do you fight or flee in response?", "Ready");
                 }
 
                 else
@@ -217,24 +223,42 @@ public class CardGame : MonoBehaviour
                 }
                 break;
 
-
+            // ----- Results Phase --------------------------------------------------
             case Phases.RESULTS:
+                // Purpose of this phase is just to display the results of the round/match
+                // Also to disable the current 10 cards in play to prevent rescanning
+
+                // Set up next phase (Draw)
                 phase = Phases.DRAW;
                 nextTurn = Turns.FIRSTTURN;
-                ReadyTurn(true, "Red", "Draw your 5 cards and scan them");
+                ReadyTurn(true, "Red", "Draw your 5 cards and scan them", "Ready");
                 break;
         }
     }
 
-    void ReadyTurn(bool colour, string turn, string instructions)
+    void ReadyTurn(bool colour, string turn, string instructions, string button)
     {
-        gameObject.SetActive(false);
+        gameObject.SetActive(false); // Disable scanning
         infoText.gameObject.SetActive(false);
+        SwapButtonLayout(true, "-", button);
 
         if (colour)
+        {
             background.color = Color.red;
+            roleDisplay.color = Color.red;
+        }
         else
+        {
             background.color = Color.blue;
+            roleDisplay.color = Color.blue;
+        }
+
+        if (colour && attackerColour) // If the colour passed in is the Attacker, display sword
+            roleDisplay.texture = roleIcons[0];
+        else // Otherwise, display shield
+            roleDisplay.texture = roleIcons[1];
+
+        phaseDisplay.texture = phaseIcons[(int)phase];
         turnText.text = turn;
         instructionsText.text = instructions;
         background.gameObject.SetActive(true);
@@ -259,15 +283,20 @@ public class CardGame : MonoBehaviour
         progressButton.localPosition = progressPosition;
     }
 
-    public void ConfirmAcception()
+    public void PrepareProgress()
     {
-        if (phase == Phases.TRADE || phase == Phases.FIGHTORFLEE)
+        if (phase == Phases.DRAW) // Reset scans if they mistakenly scan the wrong card(s) to ensure correct hand
+        {
+            gameObject.SetActive(false);
+            gameObject.SetActive(true);
+        }
+        else if (phase == Phases.TRADE || phase == Phases.FIGHTORFLEE) // Confirms choice to allow progress based on choices
         {
             if (nextTurn == Turns.FIRSTREADY)
                 defenderAccept = true;
             else if (nextTurn == Turns.SECONDREADY)
                 attackerAccept = true;
+            ProgressPhase();
         }
-        ProgressPhase();
     }
 }
