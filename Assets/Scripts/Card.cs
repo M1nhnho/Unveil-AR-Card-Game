@@ -12,7 +12,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
     string cardName, number, suit;
     string reveal = "?";
     TextMeshPro trueValueText;
-    bool scanned = false;
+    bool drawed = false; // Refers to scanning during the Draw phase
 
     //public VirtualButtonBehaviour tradeSelectButton;
     SpriteRenderer selectGlow;
@@ -59,7 +59,6 @@ public class Card : MonoBehaviour, IPointerDownHandler
                 // Only enables cards currently in play to be selected
                 if (reveal == "R" || reveal == "B")
                     selectGlow.gameObject.SetActive(true);
-
                 RevealTrueValues();
                 break;
 
@@ -86,7 +85,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
             cardGame.blueHand.Add(cardName);
         }
 
-        scanned = true;
+        drawed = true;
         cardGame.infoText.text = ++cardGame.currentCardsScanned + "/5 Cards";
     }
 
@@ -101,15 +100,21 @@ public class Card : MonoBehaviour, IPointerDownHandler
                 if (cardGame.redHand.Contains(cardName))
                 {
                     selectGlow.color = Color.red;
+                    cardGame.redTrade.Add(cardName);
                 }
                 else if (cardGame.blueHand.Contains(cardName))
                 {
                     selectGlow.color = Color.blue;
+                    cardGame.blueTrade.Add(cardName);
                 }
             }
             else
             {
-                selectGlow.color = Color.black;
+                selectGlow.color = Color.white;
+                if (cardGame.redHand.Contains(cardName))
+                    cardGame.redTrade.Remove(cardName);
+                else if (cardGame.blueHand.Contains(cardName))
+                    cardGame.blueTrade.Remove(cardName);
             }
         }
     }
@@ -138,13 +143,13 @@ public class Card : MonoBehaviour, IPointerDownHandler
     public void ScanLost()
     {
         // By default the scan is already lost so this makes it so it only decrements if the card was scanned first
-        if (scanned)
+        if (drawed) // 'drawed' can only be true during Draw phase
         {
-            scanned = false;
+            drawed = false;
             cardGame.infoText.text = --cardGame.currentCardsScanned + "/5 Cards";
             
             // Reset card if scan lost during turn
-            if (cardGame.phase == Phases.DRAW && (cardGame.nextTurn == Turns.FIRSTREADY || cardGame.nextTurn == Turns.SECONDREADY))
+            if (cardGame.nextTurn == Turns.FIRSTREADY || cardGame.nextTurn == Turns.SECONDREADY)
             {
                 reveal = "?";
                 trueValueText.color = Color.white;
@@ -153,6 +158,15 @@ public class Card : MonoBehaviour, IPointerDownHandler
                 else
                     cardGame.blueHand.Remove(cardName);
             }
+        }
+
+        // Update the owners (colour of True Value) after an accepted trade
+        if (cardGame.phase == Phases.FIGHTORFLEE && cardGame.defenderAccept)
+        {
+            if (cardGame.redTrade.Contains(cardName))
+                trueValueText.color = Color.blue;
+            else if (cardGame.blueTrade.Contains(cardName))
+                trueValueText.color = Color.red;
         }
 
         // At the end of each round, the current 10 cards in play are disabled to prevent rescanning

@@ -36,10 +36,12 @@ public class CardGame : MonoBehaviour
     // bool for colour: true = Red, false = Blue
     [System.NonSerialized] public bool attackerColour = true; // Red is Attacker first
     [System.NonSerialized] public bool defenderColour = false; // Blue is Defender first
-    bool attackerAccept = false; // If they choose to accept/decline trade or to fight/flee
-    bool defenderAccept = false;
+    [System.NonSerialized] public bool attackerAccept = false; // If they choose to accept/decline trade or to fight/flee
+    [System.NonSerialized] public bool defenderAccept = false;
     [System.NonSerialized] public List<string> redHand = new List<string>();
     [System.NonSerialized] public List<string> blueHand = new List<string>();
+    [System.NonSerialized] public List<string> redTrade = new List<string>();
+    [System.NonSerialized] public List<string> blueTrade = new List<string>();
 
     [System.NonSerialized] public string[] numberTrueValues = new string[] { "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13" };
     [System.NonSerialized] public string[] suitTrueValues = new string[] { "C", "D", "H", "S" };
@@ -52,7 +54,7 @@ public class CardGame : MonoBehaviour
         progressText = progressButton.GetComponentInChildren<TextMeshProUGUI>();
         secondaryText = secondaryButton.GetComponentInChildren<TextMeshProUGUI>();
 
-        // Randomise True Values
+        // Randomise True Values (their index+1 is their True Value)
         numberTrueValues = numberTrueValues.OrderBy(x => random.Next()).ToArray();
         suitTrueValues = suitTrueValues.OrderBy(x => random.Next()).ToArray();
 
@@ -75,6 +77,10 @@ public class CardGame : MonoBehaviour
                         nextTurn = Turns.FIRSTTURN;
                         ReadyTurn(attackerColour, "Attacker", "Decide which cards you wish to trade", "Ready");
                     }
+                    else
+                    {
+                        // [!] Need some form of error popup
+                    }
                 }
 
                 else if (nextTurn == Turns.SECONDREADY)
@@ -83,6 +89,10 @@ public class CardGame : MonoBehaviour
                     {
                         nextTurn = Turns.SECONDTURN;
                         ReadyTurn(false, "Blue", "Draw your 5 cards and scan them", "Ready");
+                    }
+                    else
+                    {
+                        // [!] Need some form of error popup
                     }
                 }
 
@@ -104,19 +114,38 @@ public class CardGame : MonoBehaviour
             case Phases.TRADE:
                 if (nextTurn == Turns.FIRSTREADY)
                 {
-                    attackerAccept = false;
-                    defenderAccept = false;
+                    if (defenderAccept && redTrade.Count > 0) // Trade accepted if there is one
+                    {
+                        for (int i = 0; i < redTrade.Count; i++)
+                        {
+                            // Move card(s) from Red to Blue
+                            redHand.Remove(redTrade[i]);
+                            blueHand.Add(redTrade[i]);
+
+                            // Move card(s) from Blue to Red
+                            redHand.Add(blueTrade[i]);
+                            blueHand.Remove(blueTrade[i]);
+                        }
+                    }
 
                     // Set up next phase (Fight-Or-Flee)
                     phase = Phases.FIGHTORFLEE;
                     nextTurn = Turns.FIRSTTURN;
                     ReadyTurn(attackerColour, "Attacker", "Decide to fight or to flee", "Ready");
+                    defenderAccept = false;
                 }
 
                 else if (nextTurn == Turns.SECONDREADY)
                 {
-                    nextTurn = Turns.SECONDTURN;
-                    ReadyTurn(defenderColour, "Defender", "Do you accept or decline the trade?", "Ready");
+                    if (redTrade.Count == blueTrade.Count) // Ensures a valid trade (equal number of cards being traded)
+                    {
+                        nextTurn = Turns.SECONDTURN;
+                        ReadyTurn(defenderColour, "Defender", "Do you accept or decline the trade?", "Ready");
+                    }
+                    else
+                    {
+                        // [!] Need some form of error popup
+                    }
                 }
 
                 else
@@ -190,6 +219,8 @@ public class CardGame : MonoBehaviour
                         defenderAccept = false;
                         redHand.Clear();
                         blueHand.Clear();
+                        redTrade.Clear();
+                        blueTrade.Clear();
 
                         ReadyTurn(defenderColour, "Someone Fled", "Move onto the next round", "Next Round");
                     }
