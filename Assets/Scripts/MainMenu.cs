@@ -18,7 +18,7 @@ public class MainMenu : MonoBehaviour
         SceneManager.LoadScene(1);
     }
 
-    public void LoadInstructions()
+    public void ToggleInstructions()
     {
         instructions.gameObject.SetActive(!instructions.gameObject.activeInHierarchy);
     }
