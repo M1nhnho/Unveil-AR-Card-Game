@@ -10,7 +10,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
 {
     public CardGame cardGame;
 
-    string cardName, number, suit;
+    string cardName, rank, suit; // 'cardName' as 'name' is already used by Unity
     TextMeshPro trueValueText;
     char revealTo = '?';
     bool drawed = false; // Refers to scanning during the Draw phase
@@ -20,9 +20,13 @@ public class Card : MonoBehaviour, IPointerDownHandler
     // Start is called before the first frame update
     void Start()
     {
+        // All cards names follow the standard XXY
+        // - XX represents the card rank as a number (e.g. King as 13)
+        // - Y represents the suit as its initial (e.g. Spades as S)
         cardName = gameObject.name;
-        number = cardName.Substring(0, 2);
+        rank = cardName.Substring(0, 2);
         suit = cardName.Substring(2, 1);
+
         trueValueText = gameObject.GetComponentInChildren<TextMeshPro>();
         selectGlow = gameObject.GetComponentInChildren<SpriteRenderer>();
         selectGlow.gameObject.SetActive(false);
@@ -31,10 +35,10 @@ public class Card : MonoBehaviour, IPointerDownHandler
     // Update is called once per frame
     void Update()
     {
-        // True Value always faces camera
+        // TV always faces camera
         Vector3 trueValuePosition = trueValueText.transform.position;
         Vector3 cameraPosition = Camera.main.transform.position;
-        trueValuePosition.y = 0; cameraPosition.y = 0; // Keeps True Value level as this makes it not consider the difference in height
+        trueValuePosition.y = 0; cameraPosition.y = 0; // Keeps TV level (vertical) as this makes it not consider the difference in height
         trueValueText.transform.rotation = Quaternion.LookRotation(trueValuePosition - cameraPosition);
     }
 
@@ -44,12 +48,12 @@ public class Card : MonoBehaviour, IPointerDownHandler
         switch (cardGame.phase)
         {
             case Phases.DRAW:
-                if (revealTo == '?') // If card hasn't been scanned already
+                if (revealTo == '?') // If the card hasn't been scanned and registered before
                 {
-                    if (cardGame.nextTurn == Turns.SECONDREADY && cardGame.redHand.Count < 5)
-                        AddCardToHand(true); // Add to Red Hand
-                    else if (cardGame.nextTurn == Turns.FIRSTREADY && cardGame.blueHand.Count < 5 && !cardGame.redHand.Contains(cardName))
-                        AddCardToHand(false); // Add to Blue Hand
+                    if (cardGame.nextTurn == Turns.SECONDREADY && cardGame.redHand.Count < 5) // During Red's turn and limit of 5 card scan registers
+                        AddCardToHand(true); // Registers to Red Hand
+                    else if (cardGame.nextTurn == Turns.FIRSTREADY && cardGame.blueHand.Count < 5 && !cardGame.redHand.Contains(cardName)) // During Blue's turn and limit of 5 card scan registers (provided they're not Red's)
+                        AddCardToHand(false); // Registers to Blue Hand
                 }
                 break;
 
@@ -64,7 +68,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
 
 
             case Phases.FIGHTORFLEE:
-                selectGlow.gameObject.SetActive(false);
+                selectGlow.gameObject.SetActive(false); // Disables selection as Trade phase is over
                 RevealTrueValues();
                 break;
         }
@@ -77,9 +81,9 @@ public class Card : MonoBehaviour, IPointerDownHandler
         if (drawed) // 'drawed' can only be true during Draw phase
         {
             drawed = false;
-            cardGame.infoText.text = --cardGame.currentCardsScanned + "/5 Cards";
+            cardGame.infoText.text = --cardGame.currentCardsScanned + "/5 Cards"; // '--' before to decrement first then update text
 
-            // Reset card if scan lost during turn
+            // Reset card if the scan's lost during a turn
             if (cardGame.nextTurn == Turns.FIRSTREADY || cardGame.nextTurn == Turns.SECONDREADY)
             {
                 revealTo = '?';
@@ -91,7 +95,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
             }
         }
 
-        // Update the owners (colour of True Value) after an accepted trade
+        // Update the owners (colour of TV) after an accepted trade
         if (cardGame.phase == Phases.FIGHTORFLEE && cardGame.defenderAccept)
         {
             if (cardGame.redTrade.Contains(cardName))
@@ -113,7 +117,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
     {
         if (colour) // If Red
         {
-            revealTo = 'B'; // Allow opponent (Blue) to see the True Value
+            revealTo = 'B'; // Allow the opponent (Blue) to see the TV
             trueValueText.color = Color.red; // Red text denotes Red's ownership
             cardGame.redHand.Add(cardName);
         }
@@ -124,7 +128,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
             cardGame.blueHand.Add(cardName);
         }
 
-        // Card has been successfully scanned and added to the appropriate hand
+        // Card has been successfully registered to the appropriate hand
         drawed = true;
         cardGame.infoText.text = ++cardGame.currentCardsScanned + "/5 Cards";
     }
@@ -137,6 +141,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
             selected = !selected;
             if (selected)
             {
+                // When selected, change the glow to reflect the current owner and register as up for trade (not yet actually traded as Defender needs to accept)
                 if (cardGame.redHand.Contains(cardName))
                 {
                     selectGlow.color = Color.red;
@@ -150,7 +155,8 @@ public class Card : MonoBehaviour, IPointerDownHandler
             }
             else
             {
-                selectGlow.color = Color.white;
+                // Reset card if it's unselected
+                selectGlow.color = Color.white; // White denotes unselected
                 if (cardGame.redHand.Contains(cardName))
                     cardGame.redTrade.Remove(cardName);
                 else if (cardGame.blueHand.Contains(cardName))
@@ -159,7 +165,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
         }
     }
 
-    // Updates the text above the card to either hide or reveal their True Value
+    // Updates the text above the card to either hide or reveal their TV
     void RevealTrueValues()
     {
         // Gets the colour of the current turn
@@ -169,13 +175,13 @@ public class Card : MonoBehaviour, IPointerDownHandler
         else
             colour = cardGame.defenderColour;
 
-        // Reveals True Value if the card (originally) belonged to the opponent
+        // Reveals TV if the card belongs to the opponent (or originally did after a trade as 'revealTo' remains unchanged)
         if ((colour && revealTo == 'R') || (!colour && revealTo == 'B'))
         {
-            int trueValue = Array.IndexOf(cardGame.numberTrueValues, number) + Array.IndexOf(cardGame.suitTrueValues, suit) + 2; // +2 due to both arrays starting at 0
+            int trueValue = Array.IndexOf(cardGame.rankTrueValues, rank) + Array.IndexOf(cardGame.suitTrueValues, suit) + 2; // +2 due to both arrays starting at 0
             trueValueText.text = trueValue.ToString();
         }
-        // Otherwise, hide True Value (this only changes the currect cards in play)
+        // Otherwise, hide TV (this only changes the currect cards in play)
         else if (revealTo == 'R' || revealTo == 'B')
         {
             trueValueText.text = "?";
