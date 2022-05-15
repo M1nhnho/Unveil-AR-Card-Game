@@ -723,7 +723,7 @@ MonoBehaviour:
     could mean 2
 
 
-    A match consists of up to 3 rounds, each split into 4 phases
+    A match consists of up to 4 rounds, each split into 4 phases
     (i.e. <b>Draw</b>, <b>Trade</b>, <b>Fight-Or-Flee</b>, <b>Results</b>).
 
 
@@ -1584,22 +1584,22 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '<b>If any flee + round 1 or 2</b>
+  m_text: '<b>If any flee + round 1, 2 or 3</b>
 
-    Proceed onto the next round, discarding
-    the current hands and drawing new ones.
+    Proceed onto the next round,
+    discarding the current hands and drawing new ones.
 
 
-    <b>If any flee + round 3</b>
+    <b>If any flee + round
+    4</b>
 
-    Match
-    ends as a ''No contest''.
+    Match ends as a ''No contest''.
 
 
     <b>If both fight</b>
 
-    Match ends with either
-    a draw or a winner whose hand had the higher true sum.'
+    Match
+    ends with either a draw or a winner whose hand had the higher true sum.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}

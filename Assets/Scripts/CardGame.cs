@@ -213,7 +213,7 @@ public class CardGame : MonoBehaviour
                         else
                             DisplayResults("Draw!", Color.white);
                     }
-                    else if (round == 3) // If it's the last round but someone still Flees
+                    else if (round == 4) // If it's the last round but someone still Flees
                     {
                         DisplayResults("No contest!", Color.white);
                     }
