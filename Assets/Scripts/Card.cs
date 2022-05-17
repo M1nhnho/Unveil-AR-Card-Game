@@ -176,9 +176,9 @@ public class Card : MonoBehaviour, IPointerDownHandler
             colour = cardGame.defenderColour;
 
         // Reveals TV if the card belongs to the opponent (or originally did after a trade as 'revealTo' remains unchanged)
-        if ((colour && revealTo == 'R') || (!colour && revealTo == 'B'))
+        if ((colour && revealTo == 'R') || (!colour && revealTo == 'B')) // If the colour (player) of the current turn matches the card's 'revealTo'
         {
-            int trueValue = Array.IndexOf(cardGame.rankTrueValues, rank) + Array.IndexOf(cardGame.suitTrueValues, suit) + 2; // +2 due to both arrays starting at 0
+            int trueValue = cardGame.GetTrueValue(rank, suit);
             trueValueText.text = trueValue.ToString();
         }
         // Otherwise, hide TV (this only changes the currect cards in play)

@@ -710,30 +710,27 @@ MonoBehaviour:
 
 
     Every
-    card has a True Value (TV), which can be revealed through AR. However, only your
-    opponent''s TVs are revealed.
+    card has a True Value (TV), which can be revealed through AR. A true sum is a
+    total of the hand''s TVs. However, only your opponent''s cards'' TVs are revealed.
 
 
-    These TVs are determined through the card''s
-    physical rank (1-13) and suit (1-4), which are randomised every match.
+    These
+    TVs are randomised every match but can be determined through the card''s physical
+    rank (1-13) and suit (1-4).
 
 
-    E.g.
-    <i>King of Spades</i> may mean 9 so <i>King</i> could mean 7 and <i>Spades</i>
-    could mean 2
+    E.g., <i>king of spades</i> may mean 9 so <i>kings</i>
+    could mean 7 and <i>spades</i> could mean 2
 
 
-    A match consists of up to 4 rounds, each split into 4 phases
-    (i.e. <b>Draw</b>, <b>Trade</b>, <b>Fight-Or-Flee</b>, <b>Results</b>).
+    A match consists of up to 4
+    rounds, each split into 4 phases (i.e. <b>Draw</b>, <b>Trade</b>, <b>Fight-Or-Flee</b>,
+    <b>Results</b>).
 
 
-    Every
-    round begins with dealing 2 hands of 5 cards (all face up), one for the <color=red>Red</color>
-    player and the other for the <color=blue>Blue</color> player.
-
-
-
-'
+    Every round begins with dealing 2 hands of 5 cards (all
+    face up), one for the <color=red>Red</color> player and the other for the <color=blue>Blue</color>
+    player.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}
@@ -1593,13 +1590,14 @@ MonoBehaviour:
     <b>If any flee + round
     4</b>
 
-    Match ends as a ''No contest''.
+    Match ends as a ''no contest'' in which the match is considered forfeited.
 
 
-    <b>If both fight</b>
+    <b>If
+    both fight</b>
 
-    Match
-    ends with either a draw or a winner whose hand had the higher true sum.'
+    Match ends with either a draw or a winner whose hand had
+    the higher true sum.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}
@@ -2862,8 +2860,8 @@ MonoBehaviour:
     Accept or decline the trade.
 
 
-    <b>Note:</b> Traded cards
-    stay revealed to the same player.'
+    <b>Note:</b> Traded cards''
+    TVs stay revealed to the same player.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}
@@ -3280,8 +3278,8 @@ MonoBehaviour:
     5 cards to register them as your hand.
 
 
-    <b>Note:</b> TVs remain hidden during
-    this phase.'
+    <b>Note:</b> Cards'' TVs remain
+    hidden during this phase.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}

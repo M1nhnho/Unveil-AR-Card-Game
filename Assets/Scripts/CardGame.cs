@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,6 +21,9 @@ public class CardGame : MonoBehaviour
     TextMeshProUGUI progressText;
     public Transform secondaryButton;
     TextMeshProUGUI secondaryText;
+    public Transform historyButton;
+    public Transform revealedToRedHistory;
+    public Transform revealedToBlueHistory;
     public RawImage errorPopup;
     TextMeshProUGUI errorMessage;
     public TextMeshProUGUI roundDisplay;
@@ -38,6 +41,7 @@ public class CardGame : MonoBehaviour
     [System.NonSerialized] public Turns nextTurn = Turns.FIRSTTURN; // Next turn as the progress buttons are at the end of a turn and needs to know what to move to
     [System.NonSerialized] public int round = 1;
     [System.NonSerialized] public int currentCardsScanned = 0; // During the Draw phase, to let the player know how many cards have been scanned and registered
+    bool revealHistory = false;
 
     // There is a Red player and a Blue player, any reference to colour refers to the player
     // bool for colour: true = Red, false = Blue
@@ -49,16 +53,40 @@ public class CardGame : MonoBehaviour
 
     [System.NonSerialized] public List<string> redHand = new List<string>();
     [System.NonSerialized] public List<string> blueHand = new List<string>();
+    int redTrueSum = 0;
+    int blueTrueSum = 0;
     // During the Trade phase, the cards selected for trade
     [System.NonSerialized] public List<string> redTrade = new List<string>();
     [System.NonSerialized] public List<string> blueTrade = new List<string>();
+    // For the display of the opponent's true sum minus the below (provided the trade was accepted)
+    int redTrueSumTraded = 0;
+    int blueTrueSumTraded = 0;
 
-    // In comments, True Values will be shortened to TVs - variable name will stay as the full version for clarity
-    // True sum refers to the sum of all the TVs of a hand
+    // In comments, True Values will be shortened to TVs - variable names will stay as the full version for clarity
+    // True sum refers to the total of all the TVs of a hand
     // TVs calculated through the index so the order will be randomised
     [System.NonSerialized] public string[] rankTrueValues = new string[] { "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13" };
     [System.NonSerialized] public string[] suitTrueValues = new string[] { "C", "D", "H", "S" };
     System.Random random = new System.Random();
+
+    // To translate the card names to the physical ranks and suits for better readability (used for the history)
+    Dictionary<string, string> cardNameTranslations = new Dictionary<string, string>()
+    {
+        { "01C", "A♣" }, { "01D", "A♦" }, { "01H", "A♥" }, { "01S", "A♠" },
+        { "02C", "2♣" }, { "02D", "2♦" }, { "02H", "2♥" }, { "02S", "2♠" },
+        { "03C", "3♣" }, { "03D", "3♦" }, { "03H", "3♥" }, { "03S", "3♠" },
+        { "04C", "4♣" }, { "04D", "4♦" }, { "04H", "4♥" }, { "04S", "4♠" },
+        { "05C", "5♣" }, { "05D", "5♦" }, { "05H", "5♥" }, { "05S", "5♠" },
+        { "06C", "6♣" }, { "06D", "6♦" }, { "06H", "6♥" }, { "06S", "6♠" },
+        { "07C", "7♣" }, { "07D", "7♦" }, { "07H", "7♥" }, { "07S", "7♠" },
+        { "08C", "8♣" }, { "08D", "8♦" }, { "08H", "8♥" }, { "08S", "8♠" },
+        { "09C", "9♣" }, { "09D", "9♦" }, { "09H", "9♥" }, { "09S", "9♠" },
+        { "10C", "10♣"}, { "10D", "10♦"}, { "10H", "10♥"}, { "10S", "10♠"},
+        { "11C", "J♣" }, { "11D", "J♦" }, { "11H", "J♥" }, { "11S", "J♠" },
+        { "12C", "Q♣" }, { "12D", "Q♦" }, { "12H", "Q♥" }, { "12S", "Q♠" },
+        { "13C", "K♣" }, { "13D", "K♦" }, { "13H", "K♥" }, { "13S", "K♠" },
+    };
+
 
 
     // Start is called before the first frame update
@@ -73,8 +101,9 @@ public class CardGame : MonoBehaviour
         suitTrueValues = suitTrueValues.OrderBy(x => random.Next()).ToArray();
 
         // Begin with Red's turn to scan their hand
-        ReadyTurn(true, "<color=red>Red</color>", "Scan your hand of 5 cards");
+        ReadyTurn(true, "Red", "Scan your hand of 5 cards");
     }
+
 
     // The overall game process is handled here
     // Called whenever the progress/secondary button is pressed, progressing to the next turn/phase
@@ -88,6 +117,18 @@ public class CardGame : MonoBehaviour
                 {
                     if (blueHand.Count == 5) // Checks 5 cards have been scanned
                     {
+                        // Records the current round's TV reveals to the appropriate history
+                        // - Uses the child order to place into the correct round (child 0 is the title)
+                        TextMeshProUGUI redRevealsText = revealedToRedHistory.GetChild(round).GetComponent<TextMeshProUGUI>();
+                        TextMeshProUGUI blueRevealsText = revealedToBlueHistory.GetChild(round).GetComponent<TextMeshProUGUI>();
+                        redRevealsText.text = "<u><b>Round " + round + "</b></u>";
+                        blueRevealsText.text = "<u><b>Round " + round + "</b></u>";
+                        for (int i = 0; i < 5; i++)
+                        {
+                            redRevealsText.text += "\n" + cardNameTranslations[blueHand[i]] + "→" + GetTrueValue(blueHand[i].Substring(0, 2), blueHand[i].Substring(2, 1));
+                            blueRevealsText.text += "\n" + cardNameTranslations[redHand[i]] + "→" + GetTrueValue(redHand[i].Substring(0, 2), redHand[i].Substring(2, 1));
+                        }
+
                         // Set up for next phase (Trade)
                         phase = Phases.TRADE;
                         nextTurn = Turns.FIRSTTURN;
@@ -104,7 +145,7 @@ public class CardGame : MonoBehaviour
                     if (redHand.Count == 5)
                     {
                         nextTurn = Turns.SECONDTURN;
-                        ReadyTurn(false, "<color=blue>Blue</color>", "Scan your hand of 5 cards");
+                        ReadyTurn(false, "Blue", "Scan your hand of 5 cards");
                     }
                     else
                     {
@@ -112,7 +153,7 @@ public class CardGame : MonoBehaviour
                     }
                 }
 
-                else
+                else // If moving onto the actual turns
                 {
                     if (nextTurn == Turns.FIRSTTURN)
                         nextTurn = Turns.SECONDREADY;
@@ -131,7 +172,7 @@ public class CardGame : MonoBehaviour
             case Phases.TRADE:
                 if (nextTurn == Turns.FIRSTREADY)
                 {
-                    if (defenderAccept && redTrade.Count > 0) // Trade accepted if there is one
+                    if (defenderAccept && redTrade.Count > 0) // If trade accepted provided there is one (cards have been selected)
                     {
                         // Trade the selected cards between the hands
                         for (int i = 0; i < redTrade.Count; i++) // Equal number of cards being traded so 'redTrade.Count' = 'blueTrade.Count'
@@ -140,16 +181,27 @@ public class CardGame : MonoBehaviour
                             redHand.Remove(redTrade[i]);
                             blueHand.Add(redTrade[i]);
 
+                            redTrueSumTraded += GetTrueValue(redTrade[i].Substring(0, 2), redTrade[i].Substring(2, 1));
+
                             // Move card(s) from Blue to Red
                             redHand.Add(blueTrade[i]);
                             blueHand.Remove(blueTrade[i]);
+
+                            blueTrueSumTraded += GetTrueValue(blueTrade[i].Substring(0, 2), blueTrade[i].Substring(2, 1));
                         }
+                    }
+
+                    // Calculate each hand's true sum
+                    for (int i = 0; i < 5; i++)
+                    {
+                        redTrueSum += GetTrueValue(redHand[i].Substring(0, 2), redHand[i].Substring(2, 1));
+                        blueTrueSum += GetTrueValue(blueHand[i].Substring(0, 2), blueHand[i].Substring(2, 1));
                     }
 
                     // Set up next phase (Fight-Or-Flee)
                     phase = Phases.FIGHTORFLEE;
                     nextTurn = Turns.FIRSTTURN;
-                    ReadyTurn(attackerColour, "Attacker", "Choose <b>fight</b> or to <b>flee</b>");
+                    ReadyTurn(attackerColour, "Attacker", "Choose <b>fight</b> or <b>flee</b>");
                 }
 
                 else if (nextTurn == Turns.SECONDREADY)
@@ -191,24 +243,9 @@ public class CardGame : MonoBehaviour
 
                     if (attackerAccept && defenderAccept) // Both chose to Fight
                     {
-                        // Calculate whose hand had the higher true sum
-                        int redSum = 0;
-                        int blueSum = 0;
-                        string number, suit;
-                        for (int i = 0; i < 5; i++)
-                        {
-                            number = redHand[i].Substring(0, 2);
-                            suit = redHand[i].Substring(2, 1);
-                            redSum += Array.IndexOf(rankTrueValues, number) + Array.IndexOf(suitTrueValues, suit) + 2; // +2 due to both arrays starting at 0
-
-                            number = blueHand[i].Substring(0, 2);
-                            suit = blueHand[i].Substring(2, 1);
-                            blueSum += Array.IndexOf(rankTrueValues, number) + Array.IndexOf(suitTrueValues, suit) + 2;
-                        }
-
-                        if (redSum > blueSum)
+                        if (redTrueSum > blueTrueSum)
                             DisplayResults("<color=red>Red</color> wins!", Color.red);
-                        else if (blueSum > redSum)
+                        else if (blueTrueSum > redTrueSum)
                             DisplayResults("<color=blue>Blue</color> wins!", Color.blue);
                         else
                             DisplayResults("Draw!", Color.white);
@@ -229,8 +266,12 @@ public class CardGame : MonoBehaviour
                         defenderAccept = false;
                         redHand.Clear();
                         blueHand.Clear();
+                        redTrueSum = 0;
+                        blueTrueSum = 0;
                         redTrade.Clear();
                         blueTrade.Clear();
+                        redTrueSumTraded = 0;
+                        blueTrueSumTraded = 0;
 
                         // Swap roles
                         attackerColour = !attackerColour;
@@ -251,22 +292,12 @@ public class CardGame : MonoBehaviour
                     if (nextTurn == Turns.FIRSTTURN)
                     {
                         nextTurn = Turns.SECONDREADY;
+                        DisplayOpponentsTrueSum(attackerColour, true); // Pass in that it is the Attacker's turn, display Defender's hand's true sum
                     }
                     else
                     {
                         nextTurn = Turns.FIRSTREADY;
-
-                        // Gets colour of the Attacker for the font colour
-                        string colour = "blue";
-                        if (attackerColour)
-                            colour = "red";
-
-                        string choice = "flee";
-                        if (attackerAccept)
-                            choice = "fight";
-
-                        infoText.text = "<color=" + colour + ">Attacker</color> chose <b>" + choice + "</b>";
-                        infoText.gameObject.SetActive(true); // Shows the Defender what the Attacker chose
+                        DisplayOpponentsTrueSum(defenderColour, false);
                     }
 
                     gameObject.SetActive(true);
@@ -279,9 +310,10 @@ public class CardGame : MonoBehaviour
             // Purpose of this phase is just to display the results of the round/match
             // Also to disable the current 10 cards in play to prevent rescanning
             case Phases.RESULTS:
-                // These two were disabled for the results screen so reenable for next round
+                // These three were disabled for the results screen so reenable for next round
                 phaseDisplay.gameObject.SetActive(true);
                 roleDisplay.gameObject.SetActive(true);
+                historyButton.gameObject.SetActive(true);
 
                 // Set up next phase (Draw)
                 phase = Phases.DRAW;
@@ -290,6 +322,7 @@ public class CardGame : MonoBehaviour
                 break;
         }
     }
+
 
     // Using the secondary button, prepare anything needed before progression
     public void PrepareProgress()
@@ -310,6 +343,38 @@ public class CardGame : MonoBehaviour
         }
     }
 
+
+    // Enables the ready screen where the mobile device is to be passed to the shown colour (player)
+    void ReadyTurn(bool colour, string turn, string instructions)
+    {
+        gameObject.SetActive(false); // Disables scanning
+        infoText.gameObject.SetActive(false);
+        SwapButtonLayout(true, "-", "Ready");
+
+        if (colour) // If Red
+        {
+            turnText.text = "<color=red>" + turn + "</color>";
+            cover.color = Color.red;
+            roleDisplay.color = Color.red;
+        }
+        else // If Blue
+        {
+            turnText.text = "<color=blue>" + turn + "</color>";
+            cover.color = Color.blue;
+            roleDisplay.color = Color.blue;
+        }
+
+        if (colour && attackerColour) // If the colour passed in is the Attacker, display sword
+            roleDisplay.texture = roleIcons[0];
+        else // Otherwise, display shield
+            roleDisplay.texture = roleIcons[1];
+
+        phaseDisplay.texture = phaseIcons[(int)phase]; // Change phase icon to reflect the current phase
+        instructionsText.text = instructions;
+        cover.gameObject.SetActive(true); // Enables ready screen
+    }
+
+
     // Swap between the single-button layout and the dual-button layout along with text changes
     void SwapButtonLayout(bool singleButton, string secondary, string progress)
     {
@@ -327,47 +392,25 @@ public class CardGame : MonoBehaviour
             progressText.text = progress;
             secondaryText.text = secondary;
         }
-        progressButton.localPosition = progressPosition; // Updated position with the correct x-coordinate
+        progressButton.localPosition = progressPosition; // Update position with the correct x-coordinate
     }
 
-    // Enables the ready screen where the mobile device is to be passed to the shown colour (player)
-    void ReadyTurn(bool colour, string turn, string instructions)
-    {
-        gameObject.SetActive(false); // Disables scanning
-        infoText.gameObject.SetActive(false);
-        SwapButtonLayout(true, "-", "Ready");
 
-        if (colour)
-        {
-            turnText.text = "<color=red>" + turn + "</color>";
-            cover.color = Color.red;
-            roleDisplay.color = Color.red;
-        }
-        else
-        {
-            turnText.text = "<color=blue>" + turn + "</color>";
-            cover.color = Color.blue;
-            roleDisplay.color = Color.blue;
-        }
-
-        if (colour && attackerColour) // If the colour passed in is the Attacker, display sword
-            roleDisplay.texture = roleIcons[0];
-        else // Otherwise, display shield
-            roleDisplay.texture = roleIcons[1];
-
-        phaseDisplay.texture = phaseIcons[(int)phase]; // Change phase icon to reflect the current phase
-        instructionsText.text = instructions;
-        cover.gameObject.SetActive(true); // Enables ready screen
-    }
-
-    // Enables the results screen which is to be shown to both players
-    void DisplayResults() // Used when proceeding to the next round
+    // Game objects that needs to be disabled/hidden for the results screen
+    // A separate method just to avoid having to copy this twice for both 'DisplayResults()'
+    void DisableForResults()
     {
         gameObject.SetActive(false);
         infoText.gameObject.SetActive(false);
         phaseDisplay.gameObject.SetActive(false);
         roleDisplay.gameObject.SetActive(false);
+        historyButton.gameObject.SetActive(false);
+    }
 
+    // Enables the results screen which is to be shown to both players
+    void DisplayResults() // Used when proceeding to the next round
+    {
+        DisableForResults();
         SwapButtonLayout(true, "-", "Next Round");
         turnText.text = "Someone fled";
         instructionsText.text = "Discard the current hands and redraw";
@@ -376,11 +419,7 @@ public class CardGame : MonoBehaviour
     }
     void DisplayResults(string result, Color colour) // Used when the match has ended
     {
-        gameObject.SetActive(false);
-        infoText.gameObject.SetActive(false);
-        phaseDisplay.gameObject.SetActive(false);
-        roleDisplay.gameObject.SetActive(false);
-
+        DisableForResults();
         // Disable progress buttons as the match has ended
         progressButton.gameObject.SetActive(false);
         secondaryButton.gameObject.SetActive(false);
@@ -390,6 +429,7 @@ public class CardGame : MonoBehaviour
         cover.color = colour; // Colour of the winner or default if it's a draw
         cover.gameObject.SetActive(true);
     }
+
 
     // Display an error popup if any issue prevents game progression
     public void DisplayErrorPopup(string error)
@@ -402,5 +442,73 @@ public class CardGame : MonoBehaviour
     public void CloseErrorPopup()
     {
         errorPopup.gameObject.SetActive(false);
+    }
+
+
+    // Uses the index of the True Value arrays to calculate the TV and returns it
+    public int GetTrueValue(string rank, string suit)
+    {
+        return Array.IndexOf(rankTrueValues, rank) + Array.IndexOf(suitTrueValues, suit) + 2; // +2 due to both arrays starting at 0
+    }
+
+
+
+    // TV reveals from passed rounds (including current) are recorded which the player can view
+    public void ToggleRevealHistory()
+    {
+        revealHistory = !revealHistory;
+        if (revealHistory)
+        {
+            if (nextTurn == Turns.FIRSTTURN || nextTurn == Turns.SECONDREADY) // If Red's turn
+                revealedToRedHistory.gameObject.SetActive(true);
+            else // If Blue's turn
+                revealedToBlueHistory.gameObject.SetActive(true);
+        }
+        else
+        {
+            revealedToRedHistory.gameObject.SetActive(false);
+            revealedToBlueHistory.gameObject.SetActive(false);
+        }
+    }
+
+
+    // During the Fight-Or-Flee phase, display the opponent's hand's true sum to ease the calculation burden
+    // - Note the *opponent* so code below will reflect that, displaying the 'opposite'
+    void DisplayOpponentsTrueSum(bool red, bool attacker)
+    {
+        string roleText;
+        string trueSum;
+
+        if (attacker) // If the Attacker's turn, display Defender
+        {
+            roleText = "Defender</color> has ";
+        }
+        else // If the Defender's turn, also display Attacker's choice
+        {
+            string choice = "flee";
+            if (attackerAccept)
+                choice = "fight";
+            roleText = "Attacker</color> chose <b>"+ choice + "</b> with ";
+        }
+
+        if (red) // If Red's turn, display Blue's hand's true sum
+        {
+            if (redTrueSumTraded == 0) // If a trade didn't occur (no cards selected or declined)
+                                       // - In the case of above, both 'redTrueSumTraded' and 'redTrueSumTraded' would be 0 as they only change after a successful trade
+                trueSum = "<b>" + blueTrueSum + "</b>";
+            else
+                trueSum = "<b>" + (blueTrueSum - blueTrueSumTraded) + "(+?)</b>";
+            infoText.text = "<color=blue>" + roleText + trueSum;
+            
+        }
+        else
+        {
+            if (redTrueSumTraded == 0) 
+                trueSum = "<b>" + redTrueSum + "</b>";
+            else
+                trueSum = "<b>" + (redTrueSum - redTrueSumTraded) + "(+?)</b>";
+            infoText.text = "<color=red>" + roleText + trueSum;
+        }
+        infoText.gameObject.SetActive(true);
     }
 }
