@@ -60,7 +60,7 @@ public class CardGame : MonoBehaviour
     [System.NonSerialized] public List<string> redTrade = new List<string>();
     [System.NonSerialized] public List<string> blueTrade = new List<string>();
     // For the display of the opponent's true sum minus the below (provided the trade was accepted)
-    int redTrueSumTraded = 0;
+    [System.NonSerialized] public int redTrueSumTraded = 0; // Public to give 'Card.cs' access to know whether a trade has occurred (either variable works)
     int blueTrueSumTraded = 0;
 
     // In comments, True Values will be shortened to TVs - variable names will stay as the full version for clarity
@@ -190,6 +190,7 @@ public class CardGame : MonoBehaviour
 
                             blueTrueSumTraded += GetTrueValue(blueTrade[i].Substring(0, 2), blueTrade[i].Substring(2, 1));
                         }
+                        defenderAccept = false; // Reset as it now will be considered as Fleeing by default
                     }
 
                     // Calculate each hand's true sum

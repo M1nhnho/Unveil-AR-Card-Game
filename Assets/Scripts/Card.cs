@@ -96,7 +96,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
         }
 
         // Update the owners (colour of TV) after an accepted trade
-        if (cardGame.phase == Phases.FIGHTORFLEE && cardGame.defenderAccept)
+        if (cardGame.phase == Phases.FIGHTORFLEE && cardGame.redTrueSumTraded > 0)
         {
             if (cardGame.redTrade.Contains(cardName))
                 trueValueText.color = Color.blue;
