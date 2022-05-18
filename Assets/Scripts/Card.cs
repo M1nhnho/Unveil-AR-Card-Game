@@ -50,9 +50,9 @@ public class Card : MonoBehaviour, IPointerDownHandler
             case Phases.DRAW:
                 if (revealTo == '?') // If the card hasn't been scanned and registered before
                 {
-                    if (cardGame.nextTurn == Turns.SECONDREADY && cardGame.redHand.Count < 5) // During Red's turn and limit of 5 card scan registers
+                    if (cardGame.nextTurn == Turns.SECONDREADY && cardGame.redHand.Count < cardGame.cardsInHand) // During Red's turn and limit of 4 card scan registers
                         AddCardToHand(true); // Registers to Red Hand
-                    else if (cardGame.nextTurn == Turns.FIRSTREADY && cardGame.blueHand.Count < 5 && !cardGame.redHand.Contains(cardName)) // During Blue's turn and limit of 5 card scan registers (provided they're not Red's)
+                    else if (cardGame.nextTurn == Turns.FIRSTREADY && cardGame.blueHand.Count < cardGame.cardsInHand && !cardGame.redHand.Contains(cardName)) // During Blue's turn and limit of 4 card scan registers (provided they're not Red's)
                         AddCardToHand(false); // Registers to Blue Hand
                 }
                 break;
@@ -81,7 +81,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
         if (drawed) // 'drawed' can only be true during Draw phase
         {
             drawed = false;
-            cardGame.infoText.text = --cardGame.currentCardsScanned + "/5 Cards"; // '--' before to decrement first then update text
+            cardGame.infoText.text = $"{--cardGame.currentCardsScanned}/{cardGame.cardsInHand} Cards"; // '--' before to decrement first then update text
 
             // Reset card if the scan's lost during a turn
             if (cardGame.nextTurn == Turns.FIRSTREADY || cardGame.nextTurn == Turns.SECONDREADY)
@@ -130,7 +130,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
 
         // Card has been successfully registered to the appropriate hand
         drawed = true;
-        cardGame.infoText.text = ++cardGame.currentCardsScanned + "/5 Cards";
+        cardGame.infoText.text = $"{++cardGame.currentCardsScanned}/{cardGame.cardsInHand} Cards";
     }
 
     // During the Trade phase, allow the Attacker to select cards for trade

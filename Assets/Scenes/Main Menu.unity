@@ -728,7 +728,7 @@ MonoBehaviour:
     <b>Results</b>).
 
 
-    Every round begins with dealing 2 hands of 5 cards (all
+    Every round begins with dealing 2 hands of 4 cards (all
     face up), one for the <color=red>Red</color> player and the other for the <color=blue>Blue</color>
     player.'
   m_isRightToLeft: 0
@@ -3268,14 +3268,14 @@ MonoBehaviour:
       m_Calls: []
   m_text: '<b><color=red>Red</color> First</b>
 
-    Scan your 5 cards to register
+    Scan your 4 cards to register
     them as your hand.
 
 
     <b><color=blue>Blue</color> Second</b>
 
     Scan your
-    5 cards to register them as your hand.
+    4 cards to register them as your hand.
 
 
     <b>Note:</b> Cards'' TVs remain

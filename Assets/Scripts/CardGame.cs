@@ -51,6 +51,7 @@ public class CardGame : MonoBehaviour
     [System.NonSerialized] public bool attackerAccept = false;
     [System.NonSerialized] public bool defenderAccept = false;
 
+    [System.NonSerialized] public int cardsInHand = 4; // How many cards are in a hand
     [System.NonSerialized] public List<string> redHand = new List<string>();
     [System.NonSerialized] public List<string> blueHand = new List<string>();
     int redTrueSum = 0;
@@ -101,7 +102,7 @@ public class CardGame : MonoBehaviour
         suitTrueValues = suitTrueValues.OrderBy(x => random.Next()).ToArray();
 
         // Begin with Red's turn to scan their hand
-        ReadyTurn(true, "Red", "Scan your hand of 5 cards");
+        ReadyTurn(true, "Red", $"Scan your hand of {cardsInHand} cards");
     }
 
 
@@ -115,18 +116,18 @@ public class CardGame : MonoBehaviour
             case Phases.DRAW:
                 if (nextTurn == Turns.FIRSTREADY)
                 {
-                    if (blueHand.Count == 5) // Checks 5 cards have been scanned
+                    if (blueHand.Count == cardsInHand) // Checks 4 cards have been scanned
                     {
                         // Records the current round's TV reveals to the appropriate history
                         // - Uses the child order to place into the correct round (child 0 is the title)
                         TextMeshProUGUI redRevealsText = revealedToRedHistory.GetChild(round).GetComponent<TextMeshProUGUI>();
                         TextMeshProUGUI blueRevealsText = revealedToBlueHistory.GetChild(round).GetComponent<TextMeshProUGUI>();
-                        redRevealsText.text = "<u><b>Round " + round + "</b></u>";
-                        blueRevealsText.text = "<u><b>Round " + round + "</b></u>";
-                        for (int i = 0; i < 5; i++)
+                        redRevealsText.text = $"<u><b>Round {round}</b></u>";
+                        blueRevealsText.text = $"<u><b>Round {round}</b></u>";
+                        for (int i = 0; i < cardsInHand; i++)
                         {
-                            redRevealsText.text += "\n" + cardNameTranslations[blueHand[i]] + "→" + GetTrueValue(blueHand[i].Substring(0, 2), blueHand[i].Substring(2, 1));
-                            blueRevealsText.text += "\n" + cardNameTranslations[redHand[i]] + "→" + GetTrueValue(redHand[i].Substring(0, 2), redHand[i].Substring(2, 1));
+                            redRevealsText.text += $"\n{cardNameTranslations[blueHand[i]]}→{GetTrueValue(blueHand[i].Substring(0, 2), blueHand[i].Substring(2, 1))}";
+                            blueRevealsText.text += $"\n{cardNameTranslations[redHand[i]]}→{GetTrueValue(redHand[i].Substring(0, 2), redHand[i].Substring(2, 1))}";
                         }
 
                         // Set up for next phase (Trade)
@@ -136,20 +137,20 @@ public class CardGame : MonoBehaviour
                     }
                     else
                     {
-                        DisplayErrorPopup("All 5 cards belonging to <color=blue>Blue</color> must be scanned");
+                        DisplayErrorPopup($"All {cardsInHand} cards belonging to <color=blue>Blue</color> must be scanned");
                     }
                 }
 
                 else if (nextTurn == Turns.SECONDREADY)
                 {
-                    if (redHand.Count == 5)
+                    if (redHand.Count == cardsInHand)
                     {
                         nextTurn = Turns.SECONDTURN;
-                        ReadyTurn(false, "Blue", "Scan your hand of 5 cards");
+                        ReadyTurn(false, "Blue", $"Scan your hand of {cardsInHand} cards");
                     }
                     else
                     {
-                        DisplayErrorPopup("All 5 cards belonging to <color=red>Red</color> must be scanned");
+                        DisplayErrorPopup($"All {cardsInHand} cards belonging to <color=red>Red</color> must be scanned");
                     }
                 }
 
@@ -192,7 +193,7 @@ public class CardGame : MonoBehaviour
                     }
 
                     // Calculate each hand's true sum
-                    for (int i = 0; i < 5; i++)
+                    for (int i = 0; i < cardsInHand; i++)
                     {
                         redTrueSum += GetTrueValue(redHand[i].Substring(0, 2), redHand[i].Substring(2, 1));
                         blueTrueSum += GetTrueValue(blueHand[i].Substring(0, 2), blueHand[i].Substring(2, 1));
@@ -260,7 +261,7 @@ public class CardGame : MonoBehaviour
                         roundDisplay.text = round.ToString();
 
                         // Reset variables
-                        infoText.text = "0/5 Cards";
+                        infoText.text = $"0/{cardsInHand} Cards";
                         infoText.gameObject.SetActive(false);
                         attackerAccept = false;
                         defenderAccept = false;
@@ -318,7 +319,7 @@ public class CardGame : MonoBehaviour
                 // Set up next phase (Draw)
                 phase = Phases.DRAW;
                 nextTurn = Turns.FIRSTTURN;
-                ReadyTurn(true, "Red", "Draw your 5 cards and scan them");
+                ReadyTurn(true, "Red", $"Scan your hand of {cardsInHand} cards");
                 break;
         }
     }
@@ -353,13 +354,13 @@ public class CardGame : MonoBehaviour
 
         if (colour) // If Red
         {
-            turnText.text = "<color=red>" + turn + "</color>";
+            turnText.text = $"<color=red>{turn}</color>";
             cover.color = Color.red;
             roleDisplay.color = Color.red;
         }
         else // If Blue
         {
-            turnText.text = "<color=blue>" + turn + "</color>";
+            turnText.text = $"<color=blue>{turn}</color>";
             cover.color = Color.blue;
             roleDisplay.color = Color.blue;
         }
@@ -488,26 +489,26 @@ public class CardGame : MonoBehaviour
             string choice = "flee";
             if (attackerAccept)
                 choice = "fight";
-            roleText = "Attacker</color> chose <b>"+ choice + "</b> with ";
+            roleText = $"Attacker</color> chose <b>{choice}</b> with ";
         }
 
         if (red) // If Red's turn, display Blue's hand's true sum
         {
             if (redTrueSumTraded == 0) // If a trade didn't occur (no cards selected or declined)
                                        // - In the case of above, both 'redTrueSumTraded' and 'redTrueSumTraded' would be 0 as they only change after a successful trade
-                trueSum = "<b>" + blueTrueSum + "</b>";
+                trueSum = $"<b>{blueTrueSum}</b>";
             else
-                trueSum = "<b>" + (blueTrueSum - blueTrueSumTraded) + "(+?)</b>";
-            infoText.text = "<color=blue>" + roleText + trueSum;
+                trueSum = $"<b>{blueTrueSum - blueTrueSumTraded}(+?)</b>";
+            infoText.text = $"<color=blue>{roleText}{trueSum}";
             
         }
         else
         {
             if (redTrueSumTraded == 0) 
-                trueSum = "<b>" + redTrueSum + "</b>";
+                trueSum = $"<b>{redTrueSum}</b>";
             else
-                trueSum = "<b>" + (redTrueSum - redTrueSumTraded) + "(+?)</b>";
-            infoText.text = "<color=red>" + roleText + trueSum;
+                trueSum = $"<b>{redTrueSum - redTrueSumTraded}(+?)</b>";
+            infoText.text = $"<color=red>{roleText}{trueSum}";
         }
         infoText.gameObject.SetActive(true);
     }
