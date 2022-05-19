@@ -51,7 +51,7 @@ public class CardGame : MonoBehaviour
     [System.NonSerialized] public bool attackerAccept = false;
     [System.NonSerialized] public bool defenderAccept = false;
 
-    [System.NonSerialized] public int cardsInHand = 4; // How many cards are in a hand
+    [System.NonSerialized] public int cardsInHand = 3; // How many cards are in a hand
     [System.NonSerialized] public List<string> redHand = new List<string>();
     [System.NonSerialized] public List<string> blueHand = new List<string>();
     int redTrueSum = 0;
@@ -116,7 +116,7 @@ public class CardGame : MonoBehaviour
             case Phases.DRAW:
                 if (nextTurn == Turns.FIRSTREADY)
                 {
-                    if (blueHand.Count == cardsInHand) // Checks 4 cards have been scanned
+                    if (blueHand.Count == cardsInHand) // Checks 3 cards have been scanned
                     {
                         // Records the current round's TV reveals to the appropriate history
                         // - Uses the child order to place into the correct round (child 0 is the title)

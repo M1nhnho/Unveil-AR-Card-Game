@@ -50,9 +50,9 @@ public class Card : MonoBehaviour, IPointerDownHandler
             case Phases.DRAW:
                 if (revealTo == '?') // If the card hasn't been scanned and registered before
                 {
-                    if (cardGame.nextTurn == Turns.SECONDREADY && cardGame.redHand.Count < cardGame.cardsInHand) // During Red's turn and limit of 4 card scan registers
+                    if (cardGame.nextTurn == Turns.SECONDREADY && cardGame.redHand.Count < cardGame.cardsInHand) // During Red's turn and limit of 3 card scan registers
                         AddCardToHand(true); // Registers to Red Hand
-                    else if (cardGame.nextTurn == Turns.FIRSTREADY && cardGame.blueHand.Count < cardGame.cardsInHand && !cardGame.redHand.Contains(cardName)) // During Blue's turn and limit of 4 card scan registers (provided they're not Red's)
+                    else if (cardGame.nextTurn == Turns.FIRSTREADY && cardGame.blueHand.Count < cardGame.cardsInHand && !cardGame.redHand.Contains(cardName)) // During Blue's turn and limit of 3 card scan registers (provided they're not Red's)
                         AddCardToHand(false); // Registers to Blue Hand
                 }
                 break;
