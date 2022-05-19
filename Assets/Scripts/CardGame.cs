@@ -102,6 +102,7 @@ public class CardGame : MonoBehaviour
         suitTrueValues = suitTrueValues.OrderBy(x => random.Next()).ToArray();
 
         // Begin with Red's turn to scan their hand
+        infoText.text = $"0/{cardsInHand} Cards";
         ReadyTurn(true, "Red", $"Scan your hand of {cardsInHand} cards");
     }
 
@@ -154,15 +155,15 @@ public class CardGame : MonoBehaviour
                     }
                 }
 
-                else // If moving onto the actual turns
+                else // If moving onto the actual turn
                 {
                     if (nextTurn == Turns.FIRSTTURN)
                         nextTurn = Turns.SECONDREADY;
                     else
                         nextTurn = Turns.FIRSTREADY;
+                    BeginTurn();
 
-                    gameObject.SetActive(true); // Enable scanning
-                    cover.gameObject.SetActive(false); // Close ready screen
+                    // Other statements for beginning the turn that are phase-specific
                     infoText.gameObject.SetActive(true); // Number of cards currently scanned and registered
                     SwapButtonLayout(false, "Reset", "Confirm"); // 'Reset' to reset scanner if they misscan
                                                                  // 'Confirm' to lock in their hand
@@ -208,14 +209,15 @@ public class CardGame : MonoBehaviour
 
                 else if (nextTurn == Turns.SECONDREADY)
                 {
-                    if (redTrade.Count == blueTrade.Count) // Ensures a valid trade (equal number of cards on both sides being traded)
+                    // Checks for a valid trade - the trade is equal
+                    if (redTrade.Count == blueTrade.Count)
                     {
                         nextTurn = Turns.SECONDTURN;
                         ReadyTurn(defenderColour, "Defender", "<b>Accept</b> or <b>decline</b> the trade");
                     }
                     else
                     {
-                        DisplayErrorPopup("Number of selected cards must be equal on both sides");
+                        DisplayErrorPopup("Both hands must have an equal number of selected cards");
                     }
                 }
 
@@ -231,9 +233,7 @@ public class CardGame : MonoBehaviour
                         nextTurn = Turns.FIRSTREADY;
                         SwapButtonLayout(false, "Accept", "Decline"); // Accept or decline the trade
                     }
-
-                    gameObject.SetActive(true);
-                    cover.gameObject.SetActive(false);
+                    BeginTurn();
                 }
                 break;
 
@@ -301,9 +301,7 @@ public class CardGame : MonoBehaviour
                         nextTurn = Turns.FIRSTREADY;
                         DisplayOpponentsTrueSum(defenderColour, false);
                     }
-
-                    gameObject.SetActive(true);
-                    cover.gameObject.SetActive(false);
+                    BeginTurn();
                     SwapButtonLayout(false, "Fight", "Flee");
                 }
                 break;
@@ -334,7 +332,7 @@ public class CardGame : MonoBehaviour
             gameObject.SetActive(false);
             gameObject.SetActive(true);
         }
-        else if (phase == Phases.TRADE || phase == Phases.FIGHTORFLEE) // Stores choice to allow progress based on choice
+        else if (phase == Phases.TRADE || phase == Phases.FIGHTORFLEE) // Stores choice to allow progress based on the choice
         {
             // False by default - the button calling this method is 'Accept'/'Fight'
             if (nextTurn == Turns.FIRSTREADY)
@@ -350,6 +348,7 @@ public class CardGame : MonoBehaviour
     void ReadyTurn(bool colour, string turn, string instructions)
     {
         gameObject.SetActive(false); // Disables scanning
+        historyButton.gameObject.SetActive(false); // Disables access to history
         infoText.gameObject.SetActive(false);
         SwapButtonLayout(true, "-", "Ready");
 
@@ -366,7 +365,7 @@ public class CardGame : MonoBehaviour
             roleDisplay.color = Color.blue;
         }
 
-        if (colour && attackerColour) // If the colour passed in is the Attacker, display sword
+        if (colour == attackerColour) // If the colour passed in is the Attacker, display sword
             roleDisplay.texture = roleIcons[0];
         else // Otherwise, display shield
             roleDisplay.texture = roleIcons[1];
@@ -374,6 +373,16 @@ public class CardGame : MonoBehaviour
         phaseDisplay.texture = phaseIcons[(int)phase]; // Change phase icon to reflect the current phase
         instructionsText.text = instructions;
         cover.gameObject.SetActive(true); // Enables ready screen
+    }
+
+
+    // Begins the actual turn where the player does an action
+    // - These apply generally to all turns
+    void BeginTurn()
+    {
+        gameObject.SetActive(true); // Enable scanning
+        historyButton.gameObject.SetActive(true); // Enables access to history
+        cover.gameObject.SetActive(false); // Close ready screen
     }
 
 
@@ -398,7 +407,7 @@ public class CardGame : MonoBehaviour
     }
 
 
-    // Game objects that needs to be disabled/hidden for the results screen
+    // Game objects that need to be disabled/hidden for the results screen
     // A separate method just to avoid having to copy this twice for both 'DisplayResults()'
     void DisableForResults()
     {
@@ -456,12 +465,14 @@ public class CardGame : MonoBehaviour
 
 
     // TV reveals from passed rounds (including current) are recorded which the player can view
+    // - This can only be viewed during the actual turn, prevents previous player from looking at their opponent's history
+    // - E.g., Red finishes their turn, Blue's ready screen appears, Red looks at Blue's history before passing the device
     public void ToggleRevealHistory()
     {
         revealHistory = !revealHistory;
         if (revealHistory)
         {
-            if (nextTurn == Turns.FIRSTTURN || nextTurn == Turns.SECONDREADY) // If Red's turn
+            if ((nextTurn == Turns.SECONDREADY && (phase == Phases.DRAW || attackerColour)) || (nextTurn == Turns.FIRSTREADY && defenderColour)) // If Red's turn
                 revealedToRedHistory.gameObject.SetActive(true);
             else // If Blue's turn
                 revealedToBlueHistory.gameObject.SetActive(true);
@@ -499,7 +510,7 @@ public class CardGame : MonoBehaviour
                                        // - In the case of above, both 'redTrueSumTraded' and 'blueTrueSumTraded' would be 0 as they only change after a successful trade
                 trueSum = $"<b>{blueTrueSum}</b>";
             else
-                trueSum = $"<b>{blueTrueSum - redTrueSumTraded}(+?)</b>"; // Blue - Red because Blue now has the traded Red cards and those TVs need to stay hidden
+                trueSum = $"<b>{blueTrueSum - redTrueSumTraded}(+?)</b>"; // 'Blue - Red' because Blue has the traded Red cards and those TVs need to stay hidden
             infoText.text = $"<color=blue>{roleText}{trueSum}";
             
         }
