@@ -126,8 +126,8 @@ public class CardGame : MonoBehaviour
                         blueRevealsText.text = $"<u><b>Round {round}</b></u>";
                         for (int i = 0; i < cardsInHand; i++)
                         {
-                            redRevealsText.text += $"\n{cardNameTranslations[blueHand[i]]}→{GetTrueValue(blueHand[i].Substring(0, 2), blueHand[i].Substring(2, 1))}";
-                            blueRevealsText.text += $"\n{cardNameTranslations[redHand[i]]}→{GetTrueValue(redHand[i].Substring(0, 2), redHand[i].Substring(2, 1))}";
+                            redRevealsText.text += $"\n{cardNameTranslations[blueHand[i]]}→{GetTrueValue(blueHand[i])}";
+                            blueRevealsText.text += $"\n{cardNameTranslations[redHand[i]]}→{GetTrueValue(redHand[i])}";
                         }
 
                         // Set up for next phase (Trade)
@@ -182,13 +182,13 @@ public class CardGame : MonoBehaviour
                             redHand.Remove(redTrade[i]);
                             blueHand.Add(redTrade[i]);
 
-                            redTrueSumTraded += GetTrueValue(redTrade[i].Substring(0, 2), redTrade[i].Substring(2, 1));
+                            redTrueSumTraded += GetTrueValue(redTrade[i]);
 
                             // Move card(s) from Blue to Red
                             redHand.Add(blueTrade[i]);
                             blueHand.Remove(blueTrade[i]);
 
-                            blueTrueSumTraded += GetTrueValue(blueTrade[i].Substring(0, 2), blueTrade[i].Substring(2, 1));
+                            blueTrueSumTraded += GetTrueValue(blueTrade[i]);
                         }
                         defenderAccept = false; // Reset as it now will be considered as Fleeing by default
                     }
@@ -196,8 +196,8 @@ public class CardGame : MonoBehaviour
                     // Calculate each hand's true sum
                     for (int i = 0; i < cardsInHand; i++)
                     {
-                        redTrueSum += GetTrueValue(redHand[i].Substring(0, 2), redHand[i].Substring(2, 1));
-                        blueTrueSum += GetTrueValue(blueHand[i].Substring(0, 2), blueHand[i].Substring(2, 1));
+                        redTrueSum += GetTrueValue(redHand[i]);
+                        blueTrueSum += GetTrueValue(blueHand[i]);
                     }
 
                     // Set up next phase (Fight-Or-Flee)
@@ -448,9 +448,9 @@ public class CardGame : MonoBehaviour
 
 
     // Uses the index of the True Value arrays to calculate the TV and returns it
-    public int GetTrueValue(string rank, string suit)
+    public int GetTrueValue(string cardName)
     {
-        return Array.IndexOf(rankTrueValues, rank) + Array.IndexOf(suitTrueValues, suit) + 2; // +2 due to both arrays starting at 0
+        return Array.IndexOf(rankTrueValues, cardName.Substring(0, 2)) + Array.IndexOf(suitTrueValues, cardName.Substring(2, 1)) + 2; // +2 due to both arrays starting at 0
     }
 
 
@@ -496,10 +496,10 @@ public class CardGame : MonoBehaviour
         if (red) // If Red's turn, display Blue's hand's true sum
         {
             if (redTrueSumTraded == 0) // If a trade didn't occur (no cards selected or declined)
-                                       // - In the case of above, both 'redTrueSumTraded' and 'redTrueSumTraded' would be 0 as they only change after a successful trade
+                                       // - In the case of above, both 'redTrueSumTraded' and 'blueTrueSumTraded' would be 0 as they only change after a successful trade
                 trueSum = $"<b>{blueTrueSum}</b>";
             else
-                trueSum = $"<b>{blueTrueSum - blueTrueSumTraded}(+?)</b>";
+                trueSum = $"<b>{blueTrueSum - redTrueSumTraded}(+?)</b>"; // Blue - Red because Blue now has the traded Red cards and those TVs need to stay hidden
             infoText.text = $"<color=blue>{roleText}{trueSum}";
             
         }
@@ -508,7 +508,7 @@ public class CardGame : MonoBehaviour
             if (redTrueSumTraded == 0) 
                 trueSum = $"<b>{redTrueSum}</b>";
             else
-                trueSum = $"<b>{redTrueSum - redTrueSumTraded}(+?)</b>";
+                trueSum = $"<b>{redTrueSum - blueTrueSumTraded}(+?)</b>";
             infoText.text = $"<color=red>{roleText}{trueSum}";
         }
         infoText.gameObject.SetActive(true);

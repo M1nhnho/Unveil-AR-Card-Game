@@ -10,7 +10,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
 {
     public CardGame cardGame;
 
-    string cardName, rank, suit; // 'cardName' as 'name' is already used by Unity
+    string cardName; // 'cardName' as 'name' is already used by Unity
     TextMeshPro trueValueText;
     char revealTo = '?';
     bool drawed = false; // Refers to scanning during the Draw phase
@@ -24,9 +24,6 @@ public class Card : MonoBehaviour, IPointerDownHandler
         // - XX represents the card rank as a number (e.g. King as 13)
         // - Y represents the suit as its initial (e.g. Spades as S)
         cardName = gameObject.name;
-        rank = cardName.Substring(0, 2);
-        suit = cardName.Substring(2, 1);
-
         trueValueText = gameObject.GetComponentInChildren<TextMeshPro>();
         selectGlow = gameObject.GetComponentInChildren<SpriteRenderer>();
         selectGlow.gameObject.SetActive(false);
@@ -178,7 +175,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
         // Reveals TV if the card belongs to the opponent (or originally did after a trade as 'revealTo' remains unchanged)
         if ((colour && revealTo == 'R') || (!colour && revealTo == 'B')) // If the colour (player) of the current turn matches the card's 'revealTo'
         {
-            int trueValue = cardGame.GetTrueValue(rank, suit);
+            int trueValue = cardGame.GetTrueValue(cardName);
             trueValueText.text = trueValue.ToString();
         }
         // Otherwise, hide TV (this only changes the currect cards in play)
