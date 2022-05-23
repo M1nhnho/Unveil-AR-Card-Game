@@ -48,9 +48,9 @@ public class Card : MonoBehaviour, IPointerDownHandler
                 if (revealTo == '?') // If the card hasn't been scanned and registered before
                 {
                     if (cardGame.nextTurn == Turns.SECONDREADY && cardGame.redHand.Count < cardGame.cardsInHand) // During Red's turn and limit of 3 card scan registers
-                        AddCardToHand(true); // Registers to Red Hand
+                        AddCardToHand(true); // Registers to Red's Hand
                     else if (cardGame.nextTurn == Turns.FIRSTREADY && cardGame.blueHand.Count < cardGame.cardsInHand && !cardGame.redHand.Contains(cardName)) // During Blue's turn and limit of 3 card scan registers (provided they're not Red's)
-                        AddCardToHand(false); // Registers to Blue Hand
+                        AddCardToHand(false); // Registers to Blue's Hand
                 }
                 break;
 
@@ -60,13 +60,13 @@ public class Card : MonoBehaviour, IPointerDownHandler
                 if (revealTo == 'R' || revealTo == 'B')
                     selectGlow.gameObject.SetActive(true);
 
-                RevealTrueValues();
+                RevealTrueValue();
                 break;
 
 
             case Phases.FIGHTORFLEE:
                 selectGlow.gameObject.SetActive(false); // Disables selection as Trade phase is over
-                RevealTrueValues();
+                RevealTrueValue();
                 break;
         }
     }
@@ -78,7 +78,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
         if (drawed) // 'drawed' can only be true during Draw phase
         {
             drawed = false;
-            cardGame.infoText.text = $"{--cardGame.currentCardsScanned}/{cardGame.cardsInHand} Cards"; // '--' before to decrement first then update text
+            cardGame.infoText.text = $"{--cardGame.currentCardsRegistered}/{cardGame.cardsInHand} Cards"; // '--' before to decrement first then update text
 
             // Reset card if the scan's lost during a turn
             if (cardGame.nextTurn == Turns.FIRSTREADY || cardGame.nextTurn == Turns.SECONDREADY)
@@ -127,7 +127,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
 
         // Card has been successfully registered to the appropriate hand
         drawed = true;
-        cardGame.infoText.text = $"{++cardGame.currentCardsScanned}/{cardGame.cardsInHand} Cards";
+        cardGame.infoText.text = $"{++cardGame.currentCardsRegistered}/{cardGame.cardsInHand} Cards";
     }
 
     // During the Trade phase, allow the Attacker to select cards for trade
@@ -163,9 +163,9 @@ public class Card : MonoBehaviour, IPointerDownHandler
     }
 
     // Updates the text above the card to either hide or reveal their TV
-    void RevealTrueValues()
+    void RevealTrueValue()
     {
-        // Gets the colour of the current turn
+        // Gets the colour of the active player
         bool colour;
         if (cardGame.nextTurn == Turns.SECONDREADY)
             colour = cardGame.attackerColour;
@@ -173,7 +173,7 @@ public class Card : MonoBehaviour, IPointerDownHandler
             colour = cardGame.defenderColour;
 
         // Reveals TV if the card belongs to the opponent (or originally did after a trade as 'revealTo' remains unchanged)
-        if ((colour && revealTo == 'R') || (!colour && revealTo == 'B')) // If the colour (player) of the current turn matches the card's 'revealTo'
+        if ((colour && revealTo == 'R') || (!colour && revealTo == 'B')) // If the active player's colour matches the card's 'revealTo'
         {
             int trueValue = cardGame.GetTrueValue(cardName);
             trueValueText.text = trueValue.ToString();

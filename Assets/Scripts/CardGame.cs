@@ -38,9 +38,9 @@ public class CardGame : MonoBehaviour
     // Public to give Card.cs access
 
     [System.NonSerialized] public Phases phase = Phases.DRAW; // The current phase
-    [System.NonSerialized] public Turns nextTurn = Turns.FIRSTTURN; // Next turn as the progress buttons are at the end of a turn and needs to know what to move to
+    [System.NonSerialized] public Turns nextTurn = Turns.FIRSTTURN; // Next turn as the action/progress buttons are at the end of a turn and needs to know what to move to
     [System.NonSerialized] public int round = 1;
-    [System.NonSerialized] public int currentCardsScanned = 0; // During the Draw phase, to let the player know how many cards have been scanned and registered
+    [System.NonSerialized] public int currentCardsRegistered = 0; // During the Draw phase, to let the player know how many cards have been scanned and registered to their hand
     bool revealHistory = false;
 
     // There is a Red player and a Blue player, any reference to colour refers to the player
@@ -258,27 +258,6 @@ public class CardGame : MonoBehaviour
                     }
                     else // Otherwise, next round
                     {
-                        round++;
-                        roundDisplay.text = round.ToString();
-
-                        // Reset variables
-                        infoText.text = $"0/{cardsInHand} Cards";
-                        infoText.gameObject.SetActive(false);
-                        attackerAccept = false;
-                        defenderAccept = false;
-                        redHand.Clear();
-                        blueHand.Clear();
-                        redTrueSum = 0;
-                        blueTrueSum = 0;
-                        redTrade.Clear();
-                        blueTrade.Clear();
-                        redTrueSumTraded = 0;
-                        blueTrueSumTraded = 0;
-
-                        // Swap roles
-                        attackerColour = !attackerColour;
-                        defenderColour = !defenderColour;
-
                         DisplayResults();
                     }
                 }
@@ -294,7 +273,7 @@ public class CardGame : MonoBehaviour
                     if (nextTurn == Turns.FIRSTTURN)
                     {
                         nextTurn = Turns.SECONDREADY;
-                        DisplayOpponentsTrueSum(attackerColour, true); // Pass in that it is the Attacker's turn, display Defender's hand's true sum
+                        DisplayOpponentsTrueSum(attackerColour, true); // Pass in that it is the Attacker's turn, display the true sum of the Defender's hand
                     }
                     else
                     {
@@ -307,13 +286,34 @@ public class CardGame : MonoBehaviour
                 break;
 
             // ----- Results Phase --------------------------------------------------
-            // Purpose of this phase is just to display the results of the round/match
+            // Main purpose of this phase is just to display the results of the round/match
             // Also to disable the current 10 cards in play to prevent rescanning
             case Phases.RESULTS:
-                // These three were disabled for the results screen so reenable for next round
+                // Increment round
+                round++;
+                roundDisplay.text = round.ToString();
+
+                // Reset variables
+                infoText.text = $"0/{cardsInHand} Cards";
+                infoText.gameObject.SetActive(false);
+                attackerAccept = false;
+                defenderAccept = false;
+                redHand.Clear();
+                blueHand.Clear();
+                redTrueSum = 0;
+                blueTrueSum = 0;
+                redTrade.Clear();
+                blueTrade.Clear();
+                redTrueSumTraded = 0;
+                blueTrueSumTraded = 0;
+
+                // Swap roles
+                attackerColour = !attackerColour;
+                defenderColour = !defenderColour;
+
+                // These two were disabled for the results screen so reenable for next round
                 phaseDisplay.gameObject.SetActive(true);
                 roleDisplay.gameObject.SetActive(true);
-                historyButton.gameObject.SetActive(true);
 
                 // Set up next phase (Draw)
                 phase = Phases.DRAW;
@@ -332,7 +332,7 @@ public class CardGame : MonoBehaviour
             gameObject.SetActive(false);
             gameObject.SetActive(true);
         }
-        else if (phase == Phases.TRADE || phase == Phases.FIGHTORFLEE) // Stores choice to allow progress based on the choice
+        else if (phase == Phases.TRADE || phase == Phases.FIGHTORFLEE) // Saves choice to allow progress based on the choice
         {
             // False by default - the button calling this method is 'Accept'/'Fight'
             if (nextTurn == Turns.FIRSTREADY)
@@ -431,12 +431,12 @@ public class CardGame : MonoBehaviour
     void DisplayResults(string result, Color colour) // Used when the match has ended
     {
         DisableForResults();
-        // Disable progress buttons as the match has ended
+        // Disable action/progress buttons as the match has ended
         progressButton.gameObject.SetActive(false);
         secondaryButton.gameObject.SetActive(false);
 
         turnText.text = result;
-        instructionsText.text = "Return to the Main Menu";
+        instructionsText.text = "Return to the main menu";
         cover.color = colour; // Colour of the winner or default if it's a draw
         cover.gameObject.SetActive(true);
     }
@@ -485,7 +485,7 @@ public class CardGame : MonoBehaviour
     }
 
 
-    // During the Fight-Or-Flee phase, display the opponent's hand's true sum to ease the calculation burden
+    // During the Fight-Or-Flee phase, display the true sum of the opponent's hand to ease the calculation burden
     // - Note the *opponent* so code below will reflect that, displaying the 'opposite'
     void DisplayOpponentsTrueSum(bool red, bool attacker)
     {
