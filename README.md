@@ -1,4 +1,4 @@
-# AR Card Game
+# AR Card Game - Unveil
 _As part of the final university course unit "Project" to create and manage an individual project, in which I selected the "Augmented Reality Card Game" project brief._
 
 My aim was to create an unique card game that incorporates both the physical and digital world into its core gameplay, as opposed to simply using AR to enhance the immersion of an already existing game.
